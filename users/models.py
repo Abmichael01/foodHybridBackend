@@ -104,7 +104,7 @@ class OrderDeliveryConfirmation(models.Model):
     
     store_name = models.CharField(max_length=255)
     store_email = models.EmailField(null=True, blank=True)
-    store_phone = models.CharField(max_length=20)
+    store_phone = models.CharField(max_length=255)
     store_address = models.CharField(max_length=255)
     
     otp = models.CharField(max_length=6, blank=True)
