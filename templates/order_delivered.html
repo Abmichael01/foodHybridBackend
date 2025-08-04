@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- <title>Your Money Is On The Way</title> -->
+  <style>
+    /* For clients that support style tags */
+    /* *{
+      padding: 0;
+      margin: 0;
+    } */
+    :root {
+      color-scheme: light;
+      supported-color-schemes: light;
+    }
+
+    @media screen {
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 400;
+        src: local("Inter"),
+          url("https://fonts.gstatic.com/s/inter/v12/UcCO3Fwr3pR_KjvPbYJtbn-Yk9uBA.woff2") format("woff2");
+      }
+    }
+    .highlight-box {
+            background-color: #f0f4f8;
+            border-left: 4px solid #007BFF;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 20px;
+            margin-top: 20px;
+            background-color: #007BFF;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+  </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #ffffff">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%"
+    style="font-family: Inter, Arial, sans-serif; max-width: 600px" align="center">
+    <tr>
+      <td align="center">
+        <!-- Outer container -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px">
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#13201a" style="padding: 40px 20px; border-radius: 0 0 40px 40px; background: #13201a; /* fallback */
+background: linear-gradient(135deg, #0a140f 0%, #39584a 50%, #0a140f 100%);
+">
+              <table width="100%">
+                <tr>
+                  <td align="left">
+                    <img
+                        src="https://food-hybrid-demo.vercel.app/logo.png"
+                        alt="Food Hybrid Logo"
+                        width="80"
+                        style="display: block"
+                      />
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" style="padding-top: 30px">
+                    <h1 style="
+                          margin: 0;
+                          color: #ffffff;
+                          font-size: 35px;
+                          line-height: 1.4;
+                          font-family: Inter, Arial, sans-serif;
+                          text-align: start;
+                        ">
+                      {{subject}}
+                    </h1>
+                  </td>
+                  {% if code %}
+                  <h2></h2>
+                  {% else %}
+                  <td align="right">
+                    <img
+                        src="https://bluemoji.io/cdn-proxy/646218c67da47160c64a84d5/64fae0949d4749301c6fa63b_90.png"
+                        alt="Thumbs Up Emoji"
+                        width="150"
+                        style="display: block; margin-top: 10px"
+                      />
+                  </td>
+                  {% endif %}
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Text -->
+          <table style="
+                    padding: 10px 20px;
+                    font-family: Inter, Arial, sans-serif;
+                    background: #fff;
+                  ">
+            <tr style="background: #fff !important;">
+              <td>
+
+                <h3 style="font-size: 20px; color: #000000;">Hi {{ user.first_name|default:user.email }},</h3>
+                <p style="font-size: 16px; color: #000000;">  
+                   Order Delivered – Mission 1 Complete ✅<br />
+
+Your order has officially landed — safe, sound, and on time!
+Just like good jollof, we don’t miss. 😎🔥
+
+Whether it’s your first delivery or your fiftieth, we’re proud to be part of your success story. You can view all delivery details and confirmation in your partner dashboard.
+
+Here’s to more orders and more wins.
+
+
+
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <tr>
+            <td style="
+                    padding: 10px 20px;
+                    font-family: Inter, Arial, sans-serif;
+                    background: #fff;
+                    font-size: 16px;
+                  ">Cheers,<br /> Gbenga Eyiolawi.<br /> Co-Founder, Food Hybrid</td>
+          </tr>
+
+          <tr>
+            <td align="left">
+              <img
+                        src="https://food-hybrid-demo.vercel.app/signature.jpg"
+                        alt="Food Hybrid Logo"
+                        width="100%"
+                        style="display: block; border-top: 1px solid #14292c"
+                      />
+            </td>
+          </tr>
+
+          <!-- Social Footer -->
+          <tr>
+            <td bgcolor="#d82821" align="center" style="
+                  padding: 15px;
+                  color: #ffffff;
+                ">
+              <!-- <p style="margin: 0; font-size: 16px">We hope you follow us</p> -->
+              <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin-top: 10px">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-size: 16px">We hope you follow us</p>
+                  </td>
+                  <td style="padding: 0 8px">
+                    <a href="#"><img
+                          src="https://img.icons8.com/ios-filled/24/ffffff/facebook-new.png"
+                          alt="Facebook"
+                      /></a>
+                  </td>
+                  <td style="padding: 0 8px">
+                    <a href="#"><img
+                          src="https://img.icons8.com/ios-filled/24/ffffff/instagram-new.png"
+                          alt="Instagram"
+                      /></a>
+                  </td>
+                  <td style="padding: 0 8px">
+                    <a href="#"><img
+                          src="https://img.icons8.com/ios-filled/24/ffffff/twitter--v1.png"
+                          alt="Twitter"
+                      /></a>
+                  </td>
+                  <td style="padding: 0 8px">
+                    <a href="#"><img
+                          src="https://img.icons8.com/ios-filled/24/ffffff/linkedin.png"
+                          alt="LinkedIn"
+                      /></a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Legal Info -->
+          <tr>
+            <td bgcolor="#13201a" style="
+                  padding: 30px 20px;
+                  color: #e2e8f0 !important;
+                  font-size: 13px;
+                  line-height: 1.6;
+                  font-family: Inter, Arial, sans-serif;
+                  background: #13201a; /* fallback */
+background: linear-gradient(135deg, #0a140f 0%, #39584a 50%, #0a140f 100%);
+
+                "> 
+                <!-- <div class="footer">
+            &copy; {{ now|date:"Y" }} FoodHybrid. All rights reserved.
+        </div> -->
+              <p style="margin: 0; text-align:center ">© 2025 All Rights Reserved</p>
+              <hr style="
+                    margin: 20px 0;
+                    border: none;
+                    border-top: 1px solid #fff;
+                  " />
+              <p style="margin-bottom: 15px">
+                This email was sent to you by Food Hybrid. We operate across
+                multiple jurisdictions. If you are unsure which legal entity
+                provides your services, please refer to our
+                <a href="#" style="
+                      color: #ffffff;
+                      font-weight: bold;
+                      text-decoration: underline;
+                    ">Terms and Conditions</a>
+                or contact us via our support channels.
+              </p>
+              <p style="margin-bottom: 15px">
+                In Nigeria, our services are provided by Hybrid Foods & Marts
+                Limited, a company duly registered with the Corporate Affairs
+                Commission (CAC) under registration number 7550808. We
+                specialize in the processing, packaging, and distribution of
+                African food staples.
+              </p>
+              <p style="margin-bottom: 15px">
+                In the United Kingdom, our services are offered by Food Hybrid
+                and Logistics Limited, registered in London. This entity
+                focuses on smart distribution and logistics solutions tailored
+                for African and ethnic food products.
+              </p>
+              <p style="margin-bottom: 0">
+                In the United States, our operations are carried out by Tafiki
+                Technology LLC, a Delaware-registered entity. Tafiki
+                Technology is a FoodTech logistics company leveraging
+                innovative technologies to streamline the movement and
+                fulfillment of food products across borders.
+              </p>
+              <p style="margin-top: 15px">
+                Each of these entities is independently responsible for
+                services provided in their respective jurisdictions and
+                complies with local regulatory requirements.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
