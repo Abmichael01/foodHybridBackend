@@ -195,7 +195,7 @@ background: linear-gradient(135deg, #0a140f 0%, #39584a 50%, #0a140f 100%);
             <tr style="background: #fff !important;">
               <td>
 
-                <h3 style="font-size: 20px; color: #000000;">Hi {{ user.first_name|default:user.email|user.vendor_email }},</h3>
+                <h3 style="font-size: 20px; color: #000000;">Hi {{ user.first_name|default:user.email|user.owner_email }},</h3>
 
                 {% if type == "account_created" %}
                 <p style="font-size: 16px; color: #000000;">
