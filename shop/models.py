@@ -14,7 +14,7 @@ def generate_unique_product_id(name):
     return f"{prefix}-{random_part}"
 
 class Shop(models.Model):
-    shop_id = models.CharField(max_length=20, unique=True, editable=False)
+    shop_id = models.CharField(max_length=225, unique=True, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
     address = models.TextField()
