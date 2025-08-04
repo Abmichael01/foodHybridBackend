@@ -100,10 +100,10 @@ class OrderDeliveryConfirmation(models.Model):
     investment = models.OneToOneField(PartnerInvestment, on_delete=models.CASCADE, related_name='delivery_confirmation')
 
     owner_name = models.CharField(max_length=255)
-    owner_email = models.EmailField()
+    owner_email = models.EmailField(null=True, blank=True)
     
     store_name = models.CharField(max_length=255)
-    store_email = models.EmailField()
+    store_email = models.EmailField(null=True, blank=True)
     store_phone = models.CharField(max_length=20)
     store_address = models.CharField(max_length=255)
     
@@ -112,7 +112,7 @@ class OrderDeliveryConfirmation(models.Model):
     
     is_confirmed = models.BooleanField(default=False)
     confirmed_at = models.DateTimeField(null=True, blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -173,9 +173,9 @@ def vendor_profile_picture_upload_path(instance, filename):
     return f'vendor_profiles/{instance.name}_{filename}'
 
 class Vendor(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,default="")
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20)
+    phone = models.CharField(max_length=20,default="")
     profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
