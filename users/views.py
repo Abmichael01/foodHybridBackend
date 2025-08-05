@@ -1238,7 +1238,7 @@ class AdminComprehensiveReportView(APIView):
     def get(self, request):
         partners = Users.objects.filter(user_type="partner")
         total_partners = partners.count()
-        total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount'))['total'] or 0
+        total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
         all_orders = PartnerInvestment.objects.all().order_by('-created_at')
