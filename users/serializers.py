@@ -320,7 +320,7 @@ class PartnerAdminReportSerializer(serializers.Serializer):
         return f"{obj.first_name} {obj.last_name}"
 
     def get_total_purchase(self, obj):
-        return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('amount'))['total'] or 0
+        return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
     def get_total_orders(self, obj):
         return PartnerInvestment.objects.filter(partner=obj).count()
