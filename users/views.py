@@ -1256,19 +1256,19 @@ class AdminVendorDashboardView(APIView):
         vendors = Vendor.objects.all()
         total_vendors = vendors.count()
 
-        total_remittance = PartnerInvestment.objects.aggregate(
-            total=Sum('amount')
-        )['total'] or 0
+        # total_remittance = PartnerInvestment.objects.aggregate(
+        #     total=Sum('amount')
+        # )['total'] or 0
 
-        today_remittance = PartnerInvestment.objects.filter(
-            created_at__date=date.today()
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        # today_remittance = PartnerInvestment.objects.filter(
+        #     created_at__date=date.today()
+        # ).aggregate(total=Sum('amount'))['total'] or 0
 
         serialized_vendors = VendorOverviewSerializer(vendors, many=True).data
 
         return Response({
             'total_vendors': total_vendors,
-            'total_remittance': total_remittance,
-            'today_remittance': today_remittance,
+            # 'total_remittance': total_remittance,
+            # 'today_remittance': today_remittance,
             'vendors': serialized_vendors
         })
