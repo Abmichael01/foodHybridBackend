@@ -42,7 +42,7 @@ class Shop(models.Model):
         return self.name
 
 class Product(models.Model):
-    vendor = models.ForeignKey('users.Vendor', on_delete=models.CASCADE, related_name="products")
+    vendor = models.ForeignKey('users.Vendor', on_delete=models.CASCADE, related_name="products", default="")
     product_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
