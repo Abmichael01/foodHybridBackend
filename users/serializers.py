@@ -308,7 +308,7 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
 class PartnerAdminReportSerializer(serializers.Serializer):
     name = serializers.SerializerMethodField()
     email = serializers.EmailField()
-    phone = serializers.CharField()
+    # phone = serializers.CharField()
     address = serializers.CharField()
     username = serializers.CharField()
     total_purchase = serializers.SerializerMethodField()
