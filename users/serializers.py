@@ -309,7 +309,7 @@ class PartnerAdminReportSerializer(serializers.Serializer):
     name = serializers.SerializerMethodField()
     email = serializers.EmailField()
     # phone = serializers.CharField()
-    address = serializers.CharField()
+    # address = serializers.CharField()
     username = serializers.CharField()
     total_purchase = serializers.SerializerMethodField()
     total_orders = serializers.SerializerMethodField()
