@@ -7,6 +7,7 @@ from .utils import generate_order_id
 import uuid, random, string
 from django.utils.text import slugify
 from datetime import timedelta, date
+from users.models import Vendor
 
 def generate_unique_product_id(name):
     prefix = slugify(name).upper().replace('-', '')[:4]
@@ -42,7 +43,7 @@ class Shop(models.Model):
         return self.name
 
 class Product(models.Model):
-    # shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="products")
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="products")
     product_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
