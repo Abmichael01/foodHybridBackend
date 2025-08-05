@@ -285,7 +285,7 @@ class RequestPasswordResetOTPSerializer(serializers.Serializer):
 class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderDeliveryConfirmation
-        fields = ['order_id', 'business_name', 'owner_email', 'vendor_location']
+        fields = ['order_id', 'owner_name', 'owner_email', 'vendor_location']
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
     class Meta:
