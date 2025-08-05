@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification, Vendor
@@ -6,7 +6,7 @@ from shop.models import Order, PartnerInvestment, ROIPayout
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, AllOrdersSerializer,DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, AdminPartnerOrderSerializer, AllOrdersSerializer,DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import datetime
 from foodhybrid.utils import send_email
@@ -583,16 +583,37 @@ class WithdrawalSummaryAPIView(APIView):
         }, status=status.HTTP_200_OK)
     
 
-class AdminRecentOrdersView(APIView):
+# class AdminRecentOrdersView(APIView):
+#     permission_classes = [IsAdmin]
+
+#     def get(self, request):
+#         limit = int(request.query_params.get('limit', 10))  # e.g. ?limit=5
+#         orders = Order.objects.order_by('-created_at')[:limit]
+#         # select_related('partner', 'vendor').prefetch_related('items').
+
+#         serializer = AdminOrderSerializer(orders, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+class AdminRecentOrdersView(ListAPIView):
     permission_classes = [IsAdmin]
+    serializer_class = AdminPartnerOrderSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ['created_at', 'amount_invested', 'status']
+    ordering = ['-created_at']
+    search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
 
-    def get(self, request):
-        limit = int(request.query_params.get('limit', 10))  # e.g. ?limit=5
-        orders = Order.objects.order_by('-created_at')[:limit]
-        # select_related('partner', 'vendor').prefetch_related('items').
-
-        serializer = AdminOrderSerializer(orders, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
+        vendor_id = self.request.query_params.get('vendor')
+        if vendor_id:
+            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+        return qs
 
 #deliery form
 

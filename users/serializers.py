@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 
 from shop.serializers import ProductSerializer
 from .models import Users, Driver,OrderDeliveryConfirmation, Notification, EmailOTP, Vendor
-from shop.models import PartnerInvestment, ROIPayout, OrderItem, Order
+from shop.models import PartnerInvestment, Product, ROIPayout, OrderItem, Order
 from datetime import timedelta
 from django.utils import timezone
 from django.db import models
@@ -401,3 +401,56 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
 #     def get_current_cycle(self, obj):
 #         return obj.current_cycle()
+
+
+class SimplePartnerSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    class Meta:
+        model = Users
+        fields = ['id', 'username', 'email', 'full_name']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+
+class InvestmentProductSerializer(serializers.ModelSerializer):
+    shop_name = serializers.CharField(source='shop.name', read_only=True)  # if Product.shop exists
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'roi_percentage', 'duration_days', 'shop_name']
+
+class VendorSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vendor
+        fields = ['id', 'name', 'email', 'phone']  # adjust fields on Vendor
+
+
+class AdminPartnerOrderSerializer(serializers.ModelSerializer):
+    order_id = serializers.CharField(source='order_id', read_only=True)
+    date = serializers.DateTimeField(source='created_at', read_only=True)
+    partner = SimplePartnerSerializer(read_only=True)
+    vendors = serializers.SerializerMethodField()
+    amount_invested = serializers.DecimalField(source='amount_invested', max_digits=12, decimal_places=2, read_only=True)
+    investment_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PartnerInvestment
+        fields = [
+            'id', 'order_id', 'date', 'partner', 'vendors',
+            'amount_invested', 'investment_details', 'status'
+        ]
+
+    def get_investment_details(self, obj):
+        products = obj.product.all()
+        return InvestmentProductSerializer(products, many=True).data
+
+    def get_vendors(self, obj):
+        vendors = []
+        seen = set()
+        for p in obj.product.select_related('shop__vendor').all():
+            shop = getattr(p, 'shop', None)
+            vendor = getattr(shop, 'vendor', None) if shop else None
+            if vendor and vendor.id not in seen:
+                seen.add(vendor.id)
+                vendors.append(vendor)
+        return VendorSmallSerializer(vendors, many=True).data

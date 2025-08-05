@@ -99,13 +99,13 @@ class Driver(models.Model):
 class OrderDeliveryConfirmation(models.Model):
     investment = models.OneToOneField(PartnerInvestment, on_delete=models.CASCADE, related_name='delivery_confirmation')
 
-    # owner_name = models.CharField(max_length=255)
-    # owner_email = models.EmailField(null=True, blank=True)
+    owner_name = models.CharField(max_length=255)
+    owner_email = models.EmailField(null=True, blank=True)
     
-    # store_name = models.CharField(max_length=255)
-    # store_email = models.EmailField(null=True, blank=True)
-    # store_phone = models.CharField(max_length=255)
-    # store_address = models.CharField(max_length=255)
+    store_name = models.CharField(max_length=255)
+    store_email = models.EmailField(null=True, blank=True)
+    store_phone = models.CharField(max_length=255)
+    store_address = models.CharField(max_length=255)
     
     otp = models.CharField(max_length=6, blank=True)
     otp_sent_at = models.DateTimeField(null=True, blank=True)

@@ -97,51 +97,13 @@ class PartnerInvestment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    
-    # def calculate_roi(self):
-    #     total_roi = 0
-    #     for product in self.product.all():
-    #         total_roi += float(self.amount_invested) * float(product.roi_percentage) / 100
-    #     return total_roi
+
     def calculate_roi(self):
         return sum(
         float(self.amount_invested) * float(product.roi_percentage) / 100
         for product in self.product.all()
     )
 
-  
-    # def generate_roi_payout_schedule(self):
-    #     if self.roi_payouts.exists():
-    #         return  # prevent duplicate generation
-    
-    #     # total_roi = float(self.amount_invested) * float(self.roi_rate) / 100
-    #     total_roi = total_roi = self.calculate_roi()
-    #     roi_per_cycle = round(total_roi / 3, 2)
-    
-    #     # Average duration from all associated products
-    #     durations = [p.duration_days or 35 for p in self.product.all()]
-    #     avg_duration = sum(durations) // len(durations) if durations else 35
-    
-    #     interval = avg_duration // 3
-    #     created = self.created_at.date() if self.pk and self.created_at else date.today()
-    #     # created = self.created_at.date() if self.created_at else date.today()
-
-    #     remainder = total_roi - (roi_per_cycle * 3)
-    #     amounts = [roi_per_cycle] * 2 + [roi_per_cycle + remainder]
-    
-    #     payouts = []
-    #     for i in range(3):
-    #         payout_date = created + timedelta(days=interval * (i + 1))
-    #         payouts.append(
-    #             ROIPayout(
-    #                 investment=self,
-    #                 cycle_number=i + 1,
-    #                 amount=roi_per_cycle,
-    #                 payout_date=payout_date
-    #             )
-    #         )
-    
-    #     ROIPayout.objects.bulk_create(payouts)
     def generate_roi_payout_schedule(self):
         if self.roi_payouts.exists() or not self.product:
             return  # prevent duplicate or empty generation
@@ -170,16 +132,6 @@ class PartnerInvestment(models.Model):
                     payout_date=to_date
                 )
             )
-
-        # payouts = [
-        #     ROIPayout(
-        #         investment=self,
-        #         cycle_number=i + 1,
-        #         amount=payout_amounts[i],
-        #         payout_date=created + timedelta(days=interval * (i + 1))
-        #     )
-        #     for i in range(3)
-        # ]
 
         ROIPayout.objects.bulk_create(payouts)
         

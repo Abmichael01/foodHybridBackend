@@ -63,3 +63,5 @@ class ProductSerializer(serializers.ModelSerializer):
                 ProductImage.objects.create(product=instance, image=img)
 
         return instance
+
+
