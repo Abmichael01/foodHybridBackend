@@ -176,7 +176,7 @@ class ConfirmDeliveryView(APIView):
         otp = request.data.get("otp")
 
         try:
-            delivery = OrderDeliveryConfirmation.objects.get(order_id=investment_id)
+            delivery = OrderDeliveryConfirmation.objects.get(investment_id=investment_id)
         except OrderDeliveryConfirmation.DoesNotExist:
             return Response({"detail": "No delivery record found"}, status=404)
 
