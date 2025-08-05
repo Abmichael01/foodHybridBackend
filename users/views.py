@@ -1236,7 +1236,7 @@ class AdminComprehensiveReportView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        partners = Users.objects.filter(is_partner=True)
+        partners = Users.objects.filter(user_type="partner")
         total_partners = partners.count()
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount'))['total'] or 0
 
