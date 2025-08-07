@@ -613,7 +613,7 @@ class AdminRecentOrdersView(ListAPIView):
         vendor_id = self.request.query_params.get('vendor')
         if vendor_id:
             pass
-            # qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
         return qs
 
 #deliery form

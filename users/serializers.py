@@ -426,11 +426,11 @@ class VendorSmallSerializer(serializers.ModelSerializer):
 
 
 class AdminPartnerOrderSerializer(serializers.ModelSerializer):
-    order_id = serializers.CharField(source='order_id', read_only=True)
+    order_id = serializers.CharField(read_only=True)
     date = serializers.DateTimeField(source='created_at', read_only=True)
     partner = SimplePartnerSerializer(read_only=True)
     vendors = serializers.SerializerMethodField()
-    amount_invested = serializers.DecimalField(source='amount_invested', max_digits=12, decimal_places=2, read_only=True)
+    amount_invested = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     investment_details = serializers.SerializerMethodField()
 
     class Meta:
