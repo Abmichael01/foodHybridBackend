@@ -612,7 +612,8 @@ class AdminRecentOrdersView(ListAPIView):
         qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
         vendor_id = self.request.query_params.get('vendor')
         if vendor_id:
-            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+            pass
+            # qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
         return qs
 
 #deliery form
