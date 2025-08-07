@@ -1265,7 +1265,7 @@ class AdminComprehensiveReportView(APIView):
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
         all_orders = PartnerInvestment.objects.all().order_by('-created_at')
-        orders_data = AllOrdersSerializer(all_orders, many=True).data
+        orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True).data
 
         return Response({
             'total_partners': total_partners,

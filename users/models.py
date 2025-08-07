@@ -73,7 +73,9 @@ class Users(AbstractBaseUser, PermissionsMixin):
   
       def __str__(self):
           return self.email
-    
+      def get_full_name(self):
+          return f"{self.first_name} {self.last_name}".strip()
+          
 class EmailOTP(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
     otp = models.CharField(max_length=4)
