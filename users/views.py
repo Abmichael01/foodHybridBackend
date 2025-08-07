@@ -1301,6 +1301,6 @@ class RecentInvestmentsView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        recent_investments = PartnerInvestment.objects.select_related('partner', 'vendor').prefetch_related('product').order_by('-created_at')[:20]
+        recent_investments = PartnerInvestment.objects.select_related('partner').prefetch_related('product').order_by('-created_at')[:20]
         serializer = PartnerInvestmentListSerializer(recent_investments, many=True)
         return Response(serializer.data)
