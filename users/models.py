@@ -173,6 +173,7 @@ def vendor_profile_picture_upload_path(instance, filename):
     return f'vendor_profiles/{instance.name}_{filename}'
 
 class Vendor(models.Model):
+    vendor_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=255,default="")
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=225,default="")
