@@ -599,22 +599,22 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 200
 
-class AdminRecentOrdersView(ListAPIView):
-    permission_classes = [IsAdmin]
-    serializer_class = AdminPartnerOrderSerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['created_at', 'amount_invested', 'status']
-    ordering = ['-created_at']
-    search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
+# class AdminRecentOrdersView(ListAPIView):
+#     permission_classes = [IsAdmin]
+#     serializer_class = AdminPartnerOrderSerializer
+#     pagination_class = StandardResultsSetPagination
+#     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+#     ordering_fields = ['created_at', 'amount_invested', 'status']
+#     ordering = ['-created_at']
+#     search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
 
-    def get_queryset(self):
-        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
-        vendor_id = self.request.query_params.get('vendor')
-        if vendor_id:
-            pass
-            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
-        return qs
+#     def get_queryset(self):
+#         qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
+#         vendor_id = self.request.query_params.get('vendor')
+#         if vendor_id:
+#             pass
+#             qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+#         return qs
 
 #deliery form
 

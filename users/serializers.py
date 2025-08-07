@@ -340,7 +340,7 @@ class AllOrdersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PartnerInvestment
-        fields = ['id', 'partner_name', 'shop_name', 'amount', 'status', 'created_at']
+        fields = ['id', 'partner_name', 'shop_name', 'amount_invested', 'status', 'created_at']
 
 class VendorOverviewSerializer(serializers.ModelSerializer):
     total_remittance = serializers.SerializerMethodField()
