@@ -3,6 +3,7 @@ from django.db import models
 # from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
+
 from .utils import generate_order_id
 import uuid, random, string
 from django.utils.text import slugify
@@ -42,8 +43,6 @@ class Shop(models.Model):
         return self.name
 
 class Product(models.Model):
-    # vendor = models.ForeignKey("users.vendor", on_delete=models.CASCADE, related_name='products', null=True, blank=True)
-
     vendor = models.ForeignKey('users.Vendor', on_delete=models.CASCADE, related_name="products",null=True, blank=True)
     product_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=100)
@@ -91,6 +90,7 @@ class PartnerInvestment(models.Model):
     
     partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments")
     product = models.ManyToManyField(Product, related_name="investments")
+    vendor = models.ForeignKey("users.Vendor", on_delete=models.CASCADE, related_name='investments')
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2)
     roi_rate = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)  # ROI per payout cycle (e.g., 3%)
     roi_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)

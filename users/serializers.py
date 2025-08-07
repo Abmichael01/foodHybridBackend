@@ -342,6 +342,8 @@ class AllOrdersSerializer(serializers.ModelSerializer):
         model = PartnerInvestment
         fields = ['id', 'partner_name', 'shop_name', 'amount_invested', 'status', 'created_at']
 
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
 class VendorOverviewSerializer(serializers.ModelSerializer):
     total_remittance = serializers.SerializerMethodField()
     today_remittance = serializers.SerializerMethodField()
