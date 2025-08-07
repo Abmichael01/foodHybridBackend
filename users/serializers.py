@@ -3,8 +3,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from shop.serializers import ProductSerializer
-from .models import Users, Driver,OrderDeliveryConfirmation, Notification, EmailOTP, Vendor
-from shop.models import PartnerInvestment, Product, ROIPayout, OrderItem, Order
+from .models import Users, Driver,OrderDeliveryConfirmation, Notification, EmailOTP
+from shop.models import PartnerInvestment, Product, ROIPayout, OrderItem, Order, Vendor
 from datetime import timedelta
 from django.utils import timezone
 from django.db import models

@@ -41,9 +41,25 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+def vendor_profile_picture_upload_path(instance, filename):
+    return f'vendor_profiles/{instance.name}_{filename}'
+
+
+class Vendor(models.Model):
+    vendor_id = models.CharField(max_length=20, unique=True, editable=False)
+    name = models.CharField(max_length=255,default="")
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=225,default="")
+    profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
-    vendor = models.ForeignKey('users.Vendor', on_delete=models.CASCADE, related_name="products",null=True, blank=True)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="products",null=True, blank=True)
     product_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
@@ -78,6 +94,7 @@ class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product_images/')
 
+
 class PartnerInvestment(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -90,7 +107,7 @@ class PartnerInvestment(models.Model):
     
     partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments")
     product = models.ManyToManyField(Product, related_name="investments")
-    vendor = models.ForeignKey("users.Vendor", on_delete=models.CASCADE, related_name='investments')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2)
     roi_rate = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)  # ROI per payout cycle (e.g., 3%)
     roi_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -1,8 +1,8 @@
 from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification, Vendor
-from shop.models import PartnerInvestment, ROIPayout
+from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification
+from shop.models import PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
@@ -1263,14 +1263,14 @@ class AdminComprehensiveReportView(APIView):
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
-        all_orders = PartnerInvestment.objects.all().order_by('-created_at')
-        orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True).data
-
+        all_orders = PartnerInvestment.objects.all()
+        orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True)
+        print(all_orders)
         return Response({
             'total_partners': total_partners,
             'total_investment': total_investment,
             'partners': partner_data,
-            'all_orders': orders_data
+            # 'all_orders': orders_data
         })
     
 class AdminVendorDashboardView(APIView):
