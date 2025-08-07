@@ -104,10 +104,9 @@ class PartnerInvestment(models.Model):
         ('settled', 'Settled'),
         ('delivered', 'Delivered')
     )
-    
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')    
     partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments")
     product = models.ManyToManyField(Product, related_name="investments")
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2)
     roi_rate = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)  # ROI per payout cycle (e.g., 3%)
     roi_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)

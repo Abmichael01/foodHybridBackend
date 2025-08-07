@@ -332,16 +332,40 @@ class PartnerAdminReportSerializer(serializers.Serializer):
     def get_portfolio_balance(self, obj):
         wallet = getattr(obj, 'wallet', None)
         return wallet.portfolio_balance if wallet and hasattr(wallet, 'portfolio_balance') else 0
+    
 
-class PartnerAdminInvestmentSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
-    vendor = serializers.StringRelatedField(read_only=True)
-    partner = serializers.StringRelatedField(read_only=True)
+class SimplePartnerSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    class Meta:
+        model = Users
+        fields = ['id', 'username', 'email', 'full_name']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+
+
+class ProductBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['product_id', 'name', 'description', 'price']
+
+class PartnerInvestmentListSerializer(serializers.ModelSerializer):
+    partner_name = serializers.CharField(source='partner.get_full_name', read_only=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    products = ProductBriefSerializer(source='product', many=True)
 
     class Meta:
         model = PartnerInvestment
-        fields = '__all__'
-
+        fields = [
+            'order_id',
+            'partner_name',
+            'vendor_name',
+            'amount_invested',
+            'products',
+            'status',
+            'created_at'
+        ]
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
     total_remittance = serializers.SerializerMethodField()
@@ -404,15 +428,6 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 #         return obj.current_cycle()
 
 
-class SimplePartnerSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-    class Meta:
-        model = Users
-        fields = ['id', 'username', 'email', 'full_name']
-
-    def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip()
-
 
 class InvestmentProductSerializer(serializers.ModelSerializer):
     shop_name = serializers.CharField(source='shop.name', read_only=True)  # if Product.shop exists
@@ -424,6 +439,8 @@ class VendorSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id', 'name', 'email', 'phone']  # adjust fields on Vendor
+
+
 
 
 class AdminPartnerOrderSerializer(serializers.ModelSerializer):

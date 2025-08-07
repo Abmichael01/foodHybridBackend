@@ -6,7 +6,7 @@ from shop.models import PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import DeliveryConfirmationCreateSerializer, PartnerAdminInvestmentSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerInvestmentListSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import datetime
 from foodhybrid.utils import send_email
@@ -598,22 +598,22 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 200
 
-class AdminRecentOrdersView(ListAPIView):
-    permission_classes = [IsAdmin]
-    serializer_class = PartnerAdminInvestmentSerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['created_at', 'amount_invested', 'status']
-    ordering = ['-created_at']
-    search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
+# class AdminRecentOrdersView(ListAPIView):
+#     permission_classes = [IsAdmin]
+#     serializer_class = PartnerAdminInvestmentSerializer
+#     pagination_class = StandardResultsSetPagination
+#     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+#     ordering_fields = ['created_at', 'amount_invested', 'status']
+#     ordering = ['-created_at']
+#     search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
 
-    def get_queryset(self):
-        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
-        vendor_id = self.request.query_params.get('vendor')
-        if vendor_id:
-            pass
-            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
-        return qs
+#     def get_queryset(self):
+#         qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
+#         vendor_id = self.request.query_params.get('vendor')
+#         if vendor_id:
+#             pass
+#             qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+#         return qs
 
 #deliery form
 
@@ -1263,9 +1263,10 @@ class AdminComprehensiveReportView(APIView):
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
-        all_orders = PartnerInvestment.objects.all()
-        orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True)
-        print(all_orders)
+        # all_orders = PartnerInvestment.objects.all()
+        # orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True).data
+
+        # print(all_orders)
         return Response({
             'total_partners': total_partners,
             'total_investment': total_investment,
@@ -1294,3 +1295,12 @@ class AdminVendorDashboardView(APIView):
             # 'today_remittance': today_remittance,
             'vendors': serialized_vendors
         })
+    
+    
+class RecentInvestmentsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        recent_investments = PartnerInvestment.objects.select_related('partner', 'vendor').prefetch_related('product').order_by('-created_at')[:20]
+        serializer = PartnerInvestmentListSerializer(recent_investments, many=True)
+        return Response(serializer.data)
