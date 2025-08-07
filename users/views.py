@@ -2,11 +2,11 @@ from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification, Vendor
-from shop.models import Order, PartnerInvestment, ROIPayout
+from shop.models import PartnerInvestment, ROIPayout
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, AdminPartnerOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminInvestmentSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import DeliveryConfirmationCreateSerializer, PartnerAdminInvestmentSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import datetime
 from foodhybrid.utils import send_email
@@ -21,7 +21,6 @@ from django.db.models.functions import TruncDate
 from decimal import Decimal
 import os
 from django.utils import timezone
-from datetime import timedelta, date
 from rest_framework.generics import UpdateAPIView, DestroyAPIView,ListAPIView
 from rest_framework.filters import SearchFilter
 from django.db import models
