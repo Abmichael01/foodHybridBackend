@@ -1263,17 +1263,9 @@ class AdminComprehensiveReportView(APIView):
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
-<<<<<<< HEAD
         all_orders = PartnerInvestment.objects.all()
         orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True)
         print(all_orders)
-=======
-        all_orders = PartnerInvestment.objects.select_related('partner', 'vendor')\
-            .prefetch_related('items__product')\
-            .order_by('-created_at')
-        orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True).data
-
->>>>>>> 54d232fa46a616d1081d691faeae8bafe2c4df46
         return Response({
             'total_partners': total_partners,
             'total_investment': total_investment,
