@@ -6,7 +6,7 @@ from shop.models import Order, PartnerInvestment, ROIPayout
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, AdminPartnerOrderSerializer, AllOrdersSerializer,DeliveryConfirmationCreateSerializer, PartnerAdminInvestmentSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, AdminPartnerOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminInvestmentSerializer, PartnerAdminReportSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import datetime
 from foodhybrid.utils import send_email
