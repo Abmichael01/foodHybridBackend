@@ -333,6 +333,14 @@ class PartnerAdminReportSerializer(serializers.Serializer):
         wallet = getattr(obj, 'wallet', None)
         return wallet.portfolio_balance if wallet and hasattr(wallet, 'portfolio_balance') else 0
 
+class PartnerAdminInvestmentSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    vendor = serializers.StringRelatedField(read_only=True)
+    partner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = PartnerInvestment
+        fields = '__all__'
 
 class AllOrdersSerializer(serializers.ModelSerializer):
     partner_name = serializers.CharField(source='partner.get_full_name')
