@@ -1280,12 +1280,12 @@ class AdminVendorDashboardView(APIView):
         total_vendors = vendors.count()
 
         total_remittance = PartnerInvestment.objects.aggregate(
-            total=Sum('amount')
+            total=Sum('amount_invested')
         )['total'] or 0
 
         today_remittance = PartnerInvestment.objects.filter(
             created_at__date=date.today()
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
         serialized_vendors = VendorOverviewSerializer(vendors, many=True).data
 

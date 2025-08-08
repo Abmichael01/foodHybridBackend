@@ -85,10 +85,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'created_at', 'partner_name', 'vendor_name', 'total_amount', 'items', 'order_id', 'product']
 
     def get_total_amount(self, obj):
-        return sum(item.quantity * item.price for item in obj.items.all())
-    
-    def get_total_amount(self, obj):
-       return sum(item.quantity * item.price for item in obj.items.all())
+        return sum(product.price for product in obj.product.all())
 
     def get_order_id(self, obj):
         # Use related_name if defined, else fallback to first related investment
