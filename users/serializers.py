@@ -81,15 +81,20 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     product = serializers.SerializerMethodField()
 
     class Meta:
-        model = Order
+        model = Order  # Still default for Orders
         fields = [
             'id', 'created_at', 'partner_name', 'vendor_name',
             'total_amount', 'items', 'order_id', 'product'
         ]
 
     def get_total_amount(self, obj):
-        # Sum over order items, not PartnerInvestment
-        return sum(item.price * item.quantity for item in obj.items.all())
+        if hasattr(obj, 'items'):  
+            # Order case
+            return sum(item.price * item.quantity for item in obj.items.all())
+        elif hasattr(obj, 'amount_invested'):  
+            # PartnerInvestment case
+            return obj.amount_invested
+        return 0
 
     def get_order_id(self, obj):
         investment = getattr(obj, 'partnerinvestment', None)
@@ -99,7 +104,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
 
     def get_product(self, obj):
         investment = getattr(obj, 'partnerinvestment', None)
-        if investment:
+        if investment and hasattr(investment, 'product'):
             return [p.name for p in investment.product.all()]
         return []
 
@@ -112,6 +117,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
             or f"{user.first_name} {user.last_name}".strip()
             or user.username
         )
+
 
 class CompleteRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -375,8 +381,8 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
-            shop__vendor=vendor
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        vendor=vendor
+        ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
     def get_today_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
