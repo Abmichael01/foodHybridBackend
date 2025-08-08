@@ -63,7 +63,7 @@ class Vendor(models.Model):
      if not self.vendor_id:
          for _ in range(10):  # try 10 times max
              candidate_id = generate_unique_vendor_id()
-             if not Vendor.objects.filter(product_id=candidate_id).exists():
+             if not Vendor.objects.filter(vendor_id=candidate_id).exists():
                  self.vendor_id = candidate_id
                  break
          else:
