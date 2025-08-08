@@ -70,7 +70,7 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
-        fields = ['id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
+        fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.CharField(read_only=True)
