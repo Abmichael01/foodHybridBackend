@@ -6,9 +6,9 @@ from shop.models import PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerInvestmentListSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerInvestmentListSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
-from datetime import datetime
+from datetime import date, datetime
 from foodhybrid.utils import send_email
 from drf_yasg import openapi
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
@@ -598,22 +598,22 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 200
 
-# class AdminRecentOrdersView(ListAPIView):
-#     permission_classes = [IsAdmin]
-#     serializer_class = PartnerAdminInvestmentSerializer
-#     pagination_class = StandardResultsSetPagination
-#     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-#     ordering_fields = ['created_at', 'amount_invested', 'status']
-#     ordering = ['-created_at']
-#     search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
+class AdminRecentOrdersView(ListAPIView):
+    permission_classes = [IsAdmin]
+    serializer_class = AdminOrderSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ['created_at', 'amount_invested', 'status']
+    ordering = ['-created_at']
+    search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
 
-#     def get_queryset(self):
-#         qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
-#         vendor_id = self.request.query_params.get('vendor')
-#         if vendor_id:
-#             pass
-#             qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
-#         return qs
+    def get_queryset(self):
+        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
+        vendor_id = self.request.query_params.get('vendor')
+        if vendor_id:
+            pass
+            qs = qs.filter(product__shop__vendor__id=vendor_id).distinct()
+        return qs
 
 #deliery form
 
@@ -1263,15 +1263,15 @@ class AdminComprehensiveReportView(APIView):
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
         partner_data = PartnerAdminReportSerializer(partners, many=True).data
-        # all_orders = PartnerInvestment.objects.all()
-        # orders_data = PartnerAdminInvestmentSerializer(all_orders, many=True).data
+        all_orders = PartnerInvestment.objects.all()
+        orders_data = AdminOrderSerializer(all_orders, many=True).data
 
         # print(all_orders)
         return Response({
             'total_partners': total_partners,
             'total_investment': total_investment,
             'partners': partner_data,
-            # 'all_orders': orders_data
+            'all_orders': orders_data
         })
     
 class AdminVendorDashboardView(APIView):
@@ -1279,20 +1279,20 @@ class AdminVendorDashboardView(APIView):
         vendors = Vendor.objects.all()
         total_vendors = vendors.count()
 
-        # total_remittance = PartnerInvestment.objects.aggregate(
-        #     total=Sum('amount')
-        # )['total'] or 0
+        total_remittance = PartnerInvestment.objects.aggregate(
+            total=Sum('amount')
+        )['total'] or 0
 
-        # today_remittance = PartnerInvestment.objects.filter(
-        #     created_at__date=date.today()
-        # ).aggregate(total=Sum('amount'))['total'] or 0
+        today_remittance = PartnerInvestment.objects.filter(
+            created_at__date=date.today()
+        ).aggregate(total=Sum('amount'))['total'] or 0
 
         serialized_vendors = VendorOverviewSerializer(vendors, many=True).data
 
         return Response({
             'total_vendors': total_vendors,
-            # 'total_remittance': total_remittance,
-            # 'today_remittance': today_remittance,
+            'total_remittance': total_remittance,
+            'today_remittance': today_remittance,
             'vendors': serialized_vendors
         })
     
