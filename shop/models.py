@@ -62,7 +62,7 @@ class Vendor(models.Model):
     def save(self, *args, **kwargs):
      if not self.vendor_id:
          for _ in range(10):  # try 10 times max
-             candidate_id = generate_unique_vendor_id(self.name)
+             candidate_id = generate_unique_vendor_id()
              if not Product.objects.filter(product_id=candidate_id).exists():
                  self.product_id = candidate_id
                  break
