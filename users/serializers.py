@@ -73,48 +73,45 @@ class VendorSerializer(serializers.ModelSerializer):
         fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
 
 class AdminOrderSerializer(serializers.ModelSerializer):
-    partner_name = serializers.CharField(read_only=True)
+    partner_name = serializers.SerializerMethodField()
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     total_amount = serializers.SerializerMethodField()
-    items = OrderItemSerializer(many=True)
+    items = OrderItemSerializer(many=True, read_only=True)
     order_id = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'created_at', 'partner_name', 'vendor_name', 'total_amount', 'items', 'order_id', 'product']
+        fields = [
+            'id', 'created_at', 'partner_name', 'vendor_name',
+            'total_amount', 'items', 'order_id', 'product'
+        ]
 
     def get_total_amount(self, obj):
-        return sum(product.price for product in obj.product.all())
+        # Sum over order items, not PartnerInvestment
+        return sum(item.price * item.quantity for item in obj.items.all())
 
     def get_order_id(self, obj):
-        # Use related_name if defined, else fallback to first related investment
         investment = getattr(obj, 'partnerinvestment', None)
         if investment:
-            return investment.order_id
+            return getattr(investment, 'order_id', None)
         return None
 
     def get_product(self, obj):
         investment = getattr(obj, 'partnerinvestment', None)
-        if investment and investment.product:
-            return investment.product.name  # or .title depending on your model
-        return None
+        if investment:
+            return [p.name for p in investment.product.all()]
+        return []
 
     def get_partner_name(self, obj):
-         user = getattr(obj, 'partner', None)
-         if not user:
-             return None
- 
-         # Prefer company_name if available, fall back to full name
-         return (
-             getattr(user, 'name', None)
-             or f"{user.first_name} {user.last_name}".strip()
-             or user.username
-         )
-        # investment = getattr(obj, 'partnerinvestment', None)
-        # if investment and investment.partner.name:
-        #     return investment.partner  # or .title depending on your model
-        # return None
+        user = getattr(obj, 'partner', None)
+        if not user:
+            return None
+        return (
+            getattr(user, 'name', None)
+            or f"{user.first_name} {user.last_name}".strip()
+            or user.username
+        )
 
 class CompleteRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()

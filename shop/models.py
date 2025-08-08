@@ -55,6 +55,7 @@ class Vendor(models.Model):
     name = models.CharField(max_length=255,default="")
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=225,default="")
+    address = models.CharField(max_length=225,default="")
     profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
