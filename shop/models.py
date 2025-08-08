@@ -9,6 +9,9 @@ import uuid, random, string
 from django.utils.text import slugify
 from datetime import timedelta, date
 
+def generate_unique_vendor_id():
+    return f"VND-{uuid.uuid4().hex[:8].upper()}"
+
 def generate_unique_product_id(name):
     prefix = slugify(name).upper().replace('-', '')[:4]
     random_part = uuid.uuid4().hex[:6].upper()
@@ -53,6 +56,15 @@ class Vendor(models.Model):
     phone = models.CharField(max_length=225,default="")
     profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    
+    # def save(self, *args, **kwargs):
+    #     if not self.vendor_id:
+    #         self.vendor_id = generate_unique_vendor_id()
+    #     super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
     def __str__(self):
         return self.name

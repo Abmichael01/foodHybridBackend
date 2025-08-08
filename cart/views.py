@@ -140,6 +140,7 @@ class CheckoutView(APIView):
 
     def post(self, request):
         user = request.user
+        vendor = request.data.get("vendor_id")
         cart = getattr(user, 'cart', None)
         wallet = getattr(user, 'wallet', None)
         pin = request.data.get("transaction_pin")
@@ -184,6 +185,7 @@ class CheckoutView(APIView):
             status="completed"
         )
         investment = PartnerInvestment.objects.create(
+                    vendor=vendor,
                     partner=user,
                     # product=product,
                     amount_invested=total,
