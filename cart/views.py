@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from users.permisssion import IsPartner
 from users.models import Notification
 from .models import Cart, CartItem
-from shop.models import Product, Order, OrderItem, PartnerInvestment
+from shop.models import Product, Order, OrderItem, PartnerInvestment, Vendor
 from wallet.utils import generate_reference
 from wallet.models import Transaction
 from foodhybrid.utils import send_email
@@ -140,16 +140,20 @@ class CheckoutView(APIView):
 
     def post(self, request):
         user = request.user
-        vendor = request.data.get("vendor_id")
         cart = getattr(user, 'cart', None)
         wallet = getattr(user, 'wallet', None)
         pin = request.data.get("transaction_pin")
+        vendor_id = request.data.get("vendor_id")
 
         if not cart or not cart.items.exists():
             return Response({'detail': 'Cart is empty.'}, status=400)
         if not wallet:
             return Response({'detail': 'Wallet not found.'}, status=404)
-        
+        if not vendor_id:
+            return Response({'detail': 'Vendor ID is required.'}, status=400)
+
+        vendor = get_object_or_404(Vendor, vendor_id=vendor_id)
+
         items = cart.items.all()
         total = sum(item.product.price * item.quantity for item in items)
         weighted_roi = sum(
@@ -159,14 +163,11 @@ class CheckoutView(APIView):
 
         if total:
             if not pin:
-                return Response({'detail': 'Transaction pin is required!.'}, status=400)
-            
+                return Response({'detail': 'Transaction pin is required!'}, status=400)
             if not user.pin_hash:
                 return Response({"detail": "Please kindly set a pin."}, status=403)
-
             if not verify_user_pin(pin, user.pin_hash):
                 return Response({"detail": "Invalid transaction PIN."}, status=403)
-
 
         if wallet.balance < total:
             return Response({'detail': 'Insufficient wallet balance.'}, status=400)
@@ -175,8 +176,6 @@ class CheckoutView(APIView):
         wallet.balance -= total
         wallet.save()
 
-      
-
         # Create order
         order = Order.objects.create(
             user=user,
@@ -184,36 +183,41 @@ class CheckoutView(APIView):
             reference=generate_reference(),
             status="completed"
         )
+
+        # Create investment with vendor
         investment = PartnerInvestment.objects.create(
-                    # vendor=v   VBHendor,
-                    partner=user,
-                    # product=product,
-                    amount_invested=total,
-                    roi_rate=round(weighted_roi, 2),  # Default, make dynamic if needed
-                    status='pending',
-                )
+            vendor=vendor,
+            partner=user,
+            amount_invested=total,
+            roi_rate=round(weighted_roi, 2),
+            status='pending',
+        )
         investment.generate_roi_payout_schedule()
-        send_email(user,"investment_created", "Investment Pending Approval", extra_context={"amount":total, "reference":order.reference} )
+
+        # Notify
+        send_email(user, "investment_created", "Investment Pending Approval",
+                   extra_context={"amount": total, "reference": order.reference})
         Notification.objects.create(
             user=user,
             title="You just made an investment!",
             message=f"You just made an investment of {total} with reference {order.reference}",
             event_type="investment",
             available_balance_at_time=wallet.balance
-        )    
+        )
         Transaction.objects.create(
             user=user,
             from_user="Available Balance",
-            payment_method= "wallet",
+            payment_method="wallet",
             to="investment",
             transaction_type="investment",
             amount=total,
-            status="completed",  # may require admin approval
+            status="completed",
             reference=generate_reference(),
             order_id=order.reference,
             description="You made an investment",
             available_balance_at_time=wallet.balance
         )
+
         for item in cart.items.all():
             investment.product.set([item.product])
             OrderItem.objects.create(
@@ -223,8 +227,6 @@ class CheckoutView(APIView):
                 price=item.product.price
             )
 
-      
-        # Clear cart
         cart.items.all().delete()
 
         return Response({
