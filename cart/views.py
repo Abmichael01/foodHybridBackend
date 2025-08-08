@@ -185,7 +185,7 @@ class CheckoutView(APIView):
             status="completed"
         )
         investment = PartnerInvestment.objects.create(
-                    vendor=vendor,
+                    # vendor=v   VBHendor,
                     partner=user,
                     # product=product,
                     amount_invested=total,

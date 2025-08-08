@@ -58,6 +58,17 @@ class Vendor(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     
+    def save(self, *args, **kwargs):
+     if not self.vendor_id:
+         for _ in range(10):  # try 10 times max
+             candidate_id = generate_unique_vendor_id(self.name)
+             if not Product.objects.filter(product_id=candidate_id).exists():
+                 self.product_id = candidate_id
+                 break
+         else:
+             raise ValueError("Could not generate a unique vendor_id after 10 attempts.")
+     super().save(*args, **kwargs)
+
     # def save(self, *args, **kwargs):
     #     if not self.vendor_id:
     #         self.vendor_id = generate_unique_vendor_id()
@@ -125,6 +136,12 @@ class PartnerInvestment(models.Model):
     order_id = models.CharField(max_length=30, unique=True, default=generate_order_id, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    
+    def save(self, *args, **kwargs):
+        if not self.vendor and self.product and self.product.shop:
+            self.vendor = self.product.shop.vendor
+        super().save(*args, **kwargs)
 
 
     def calculate_roi(self):
