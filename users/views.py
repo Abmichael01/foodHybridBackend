@@ -608,7 +608,7 @@ class AdminRecentOrdersView(ListAPIView):
     search_fields = ['order_id', 'partner__username', 'partner__email', 'product__name', 'status']
 
     def get_queryset(self):
-        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__shop__vendor').all()
+        qs = PartnerInvestment.objects.select_related('partner').prefetch_related('product__vendor').all()
         vendor_id = self.request.query_params.get('vendor')
         if vendor_id:
             pass

@@ -388,7 +388,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
         return PartnerInvestment.objects.filter(
             shop__vendor=vendor,
             created_at__date=date.today()
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
     def get_total_orders(self, vendor):
         return PartnerInvestment.objects.filter(shop__vendor=vendor).count()
