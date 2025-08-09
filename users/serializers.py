@@ -386,7 +386,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
     def get_today_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
-            shop__vendor=vendor,
+            vendor=vendor,
             created_at__date=date.today()
         ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
