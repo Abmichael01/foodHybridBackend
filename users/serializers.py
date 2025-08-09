@@ -391,12 +391,12 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
         ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
     def get_total_orders(self, vendor):
-        return PartnerInvestment.objects.filter(shop__vendor=vendor).count()
+        return PartnerInvestment.objects.filter(vendor=vendor).count()
 
     def get_orders(self, vendor):
         return PartnerInvestment.objects.filter(
-            shop__vendor=vendor
-        ).values('id', 'amount', 'status', 'created_at', 'partner__email', 'shop__name')
+            vendor=vendor
+        ).values('id', 'amount', 'status', 'created_at', 'partner__email', 'vendor__name')
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Notification
