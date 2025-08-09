@@ -396,7 +396,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
     def get_orders(self, vendor):
         return PartnerInvestment.objects.filter(
             vendor=vendor
-        ).values('id', 'amount', 'status', 'created_at', 'partner__email', 'vendor__name')
+        ).values('id', 'amount_invested', 'status', 'created_at', 'partner__email', 'vendor__name')
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Notification
