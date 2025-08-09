@@ -90,7 +90,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     def get_total_amount(self, obj):
         if hasattr(obj, 'items'):  
             # Order case
-            return sum(item.price * item.quantity for item in obj.items.all())
+            return sum(product.price * product.quantity for product in obj.items.all())
         elif hasattr(obj, 'amount_invested'):  
             # PartnerInvestment case
             return obj.amount_invested
