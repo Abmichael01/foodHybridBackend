@@ -231,7 +231,12 @@ class Order(models.Model):
     reference = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=30, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
+    def set_default_vendor_id(apps, schema_editor):
+        Vendor = apps.get_model('your_app_name', 'Vendor')
+        for order in Order.objects.all():
+            order.vendor_id = "VEND-" + str(order.id)
+            order.save()
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
