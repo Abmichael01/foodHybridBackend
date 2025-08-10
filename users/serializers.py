@@ -84,7 +84,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
         model = Order  # Still default for Orders
         fields = [
             'id', 'created_at', 'partner_name', 'vendor_name',
-            'total_amount', 'items', 'order_id', 'product'
+            'total_amount', 'items', 'order_id', 'product', 'status'
         ]
 
     def get_total_amount(self, obj):
