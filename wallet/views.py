@@ -377,7 +377,7 @@ class WithdrawWalletView(APIView):
                 user=user,
                 title="Withdrawal!",
                 message=f"Withdrawal: Request of {amount} from {user.first_name} {user.last_name}",
-                event_type="admin" & "withdraw",
+                event_type="admin" and "withdraw",
                 from_user="wallet",
                 to_user=bank_name,
             )

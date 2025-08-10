@@ -571,15 +571,16 @@ class WithdrawalSummaryAPIView(APIView):
                     "approved_withdrawals_count": approved_count,
                 })
 
-        return Response({
+            return Response({
             # "global_summary": {
             #     "total_pending_withdrawals_amount": total_pending_amount,
             #     "total_pending_withdrawals_count": total_pending_count,
             #     "total_approved_withdrawals_amount": total_approved_amount,
             #     "total_approved_withdrawals_count": total_approved_count,
             # },
-         user_summaries
-        }, status=status.HTTP_200_OK)
+    "user_summaries": user_summaries
+}, status=status.HTTP_200_OK)
+
     
 
 # class AdminRecentOrdersView(APIView):
@@ -1275,6 +1276,8 @@ class AdminComprehensiveReportView(APIView):
         total_approved_amount = approved_qs.aggregate(total=Sum('amount'))['total'] or 0
         total_approved_count = approved_qs.count()
 
+
+
         # print(all_orders)
         return Response({
             'total_partners': total_partners,
@@ -1437,12 +1440,49 @@ class AdminDashboardView(APIView):
             for order in recent_orders_qs
         ]
 
+        
+        # Per-user summaries
+        user_summaries = []
+        users = Users.objects.all()
+
+        for user in users:
+            user_pending = Transaction.objects.filter(
+                user=user, transaction_type='withdraw', status='pending'
+            )
+            user_approved = Transaction.objects.filter(
+                user=user, transaction_type='withdraw', status='approved'
+            )
+
+            pending_amount = user_pending.aggregate(total=Sum('amount'))['total'] or 0
+            approved_amount = user_approved.aggregate(total=Sum('amount'))['total'] or 0
+
+            pending_count = user_pending.count()
+            approved_count = user_approved.count()
+
+            if pending_amount > 0 or approved_amount > 0:
+                user_summaries.append({
+                    "user_id": user.id,
+                    "user_name": user.get_full_name() if hasattr(user, 'get_full_name') else str(user),
+                    "pending_withdrawals_amount": pending_amount,
+                    "pending_withdrawals_count": pending_count,
+                    # "approved_withdrawals_amount": approved_amount,
+                    # "approved_withdrawals_count": approved_count,
+                })
+
+            # return Response({
+            # "global_summary": {
+            #     "total_pending_withdrawals_amount": total_pending_amount,
+            #     "total_pending_withdrawals_count": total_pending_count,
+            #     "total_approved_withdrawals_amount": total_approved_amount,
+            #     "total_approved_withdrawals_count": total_approved_count,
+            # },
+#     "user_summaries": user_summaries
+# }, status=status.HTTP_200_OK)
+
         return Response({
-            "pending_withdrawals": {
-                "count": total_pending_count,
-                "total_amount": total_pending_amount
-            },
+            "pending_withdrawals": total_pending_count,
             "todays_remittance": total_approved_amount,
             "total_balance": total_balance,
-            "recent_orders": recent_orders
+            "recent_orders": recent_orders,
+            "user_summaries": user_summaries
         }, status=status.HTTP_200_OK)
