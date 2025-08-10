@@ -1484,5 +1484,5 @@ class AdminDashboardView(APIView):
             "todays_remittance": total_approved_amount,
             "total_balance": total_balance,
             "recent_orders": recent_orders,
-            "user_summaries": user_summaries
+            "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
