@@ -12,6 +12,7 @@ from django.db.models import Sum
 from datetime import date
 
 
+
 class PartnerSignUpSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False,allow_blank=True)
     last_name = serializers.CharField(required=False,allow_blank=True) 
@@ -505,10 +506,6 @@ class AdminPartnerOrderSerializer(serializers.ModelSerializer):
                 vendors.append(vendor)
         return VendorSmallSerializer(vendors, many=True).data
     
-# serializers.py
-from rest_framework import serializers
-from .models import PartnerInvestment, Users, Product
-
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
