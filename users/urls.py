@@ -34,6 +34,7 @@ urlpatterns = [
     path("vendors/<int:id>/update/", VendorUpdateView.as_view(), name="vendor-update"),
     path("vendors/<int:id>/delete/", VendorDeleteView.as_view(), name="vendor-delete"),
     path("vendors/", VendorListView.as_view(), name="vendor-list"),
+    path("admin/overview/", VendorListView.as_view(), name="vendor-list"),
     path('admin/report/', AdminComprehensiveReportView.as_view(), name='admin-comprehensive-report'),
     path('admin/vendors/dashboard/', AdminVendorDashboardView.as_view(), name='admin-vendor-dashboard'),
     path('admin/vendors/<str:vendor_id>/', VendorDetailWithOrdersView.as_view(), name='vendor-detail-with-orders'),
