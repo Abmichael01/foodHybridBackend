@@ -1431,9 +1431,11 @@ class AdminDashboardView(APIView):
 
         recent_orders = [
             {
+                "created_at":order.created_at,
                 "order_id": order.order_id,
                 "partner_name": getattr(order.partner, "get_full_name", lambda: str(order.partner))(),
                 "vendor_name": order.vendor.name if order.vendor else None,
+                "amount": order.amount_invested,
                 "status": order.status,
                 "products": [p.name for p in order.product.all()]
             }

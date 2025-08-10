@@ -226,6 +226,7 @@ class ROIPayout(models.Model):
         return f"Cycle {self.cycle_number} - {self.amount} on {self.payout_date}"
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, related_name='orders', on_delete=models.CASCADE)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=30, default="pending")
