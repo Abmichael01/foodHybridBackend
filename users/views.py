@@ -1339,7 +1339,7 @@ class VendorDetailWithOrdersView(APIView):
             vendor = Vendor.objects.prefetch_related(
                 # 'orders__items',
                 # 'orders__items__product',
-                 'product_set__orderitem_set__order'
+                #  'product_set__orderitem_set__order'
             ).get(vendor_id=vendor_id)
         except Vendor.DoesNotExist:
             return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
