@@ -366,6 +366,38 @@ class PartnerInvestmentListSerializer(serializers.ModelSerializer):
             'status',
             'created_at'
         ]
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['product_name', 'quantity', 'price']
+
+class VendorOrderSerializer(serializers.ModelSerializer):
+    partner_name = serializers.CharField(source='partner.full_name', read_only=True)
+    total_amount = serializers.SerializerMethodField()
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'order_id', 'partner_name', 'total_amount', 'created_at', 'items']
+
+    def get_total_amount(self, obj):
+        return sum(item.price * item.quantity for item in obj.items.all())
+
+class VendorDetailSerializer(serializers.ModelSerializer):
+    recent_orders = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Vendor
+        fields = ['vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at', 'recent_orders']
+
+    def get_recent_orders(self, obj):
+        limit = self.context.get('order_limit', 10)  # Default if not provided
+        orders = obj.orders.all().order_by('-created_at')[:limit]
+        return VendorOrderSerializer(orders, many=True).data
+
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
     total_remittance = serializers.SerializerMethodField()
@@ -472,3 +504,57 @@ class AdminPartnerOrderSerializer(serializers.ModelSerializer):
                 seen.add(vendor.id)
                 vendors.append(vendor)
         return VendorSmallSerializer(vendors, many=True).data
+    
+# serializers.py
+from rest_framework import serializers
+from .models import PartnerInvestment, Users, Product
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'roi_percentage', 'duration_days']
+
+class InvestmentSerializer(serializers.ModelSerializer):
+    products = ProductSerializer(source='product', many=True, read_only=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    total_roi = serializers.SerializerMethodField()
+    roi_collected = serializers.SerializerMethodField()
+    roi_pending = serializers.SerializerMethodField()
+    current_cycle = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PartnerInvestment
+        fields = [
+            'id', 'order_id', 'vendor_name', 'products',
+            'amount_invested', 'roi_rate', 'total_roi',
+            'roi_collected', 'roi_pending', 'current_cycle',
+            'status', 'created_at'
+        ]
+
+    def get_total_roi(self, obj):
+        return obj.total_roi()
+
+    def get_roi_collected(self, obj):
+        return obj.roi_collected()
+
+    def get_roi_pending(self, obj):
+        return obj.roi_pending()
+
+    def get_current_cycle(self, obj):
+        return obj.current_cycle()
+
+class PartnerDetailSerializer(serializers.ModelSerializer):
+    recent_investments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Users  # assuming user_type="partner"
+        fields = [
+            'id', 'full_name', 'email', 'phone',
+            'profile_picture', 'created_at', 'recent_investments'
+        ]
+
+    def get_recent_investments(self, obj):
+        limit = self.context.get('investment_limit', 10)
+        investments = obj.investments.all().select_related('vendor').prefetch_related('product')[:limit]
+        return InvestmentSerializer(investments, many=True).data
+

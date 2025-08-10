@@ -6,7 +6,7 @@ from shop.models import PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerInvestmentListSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import date, datetime
 from foodhybrid.utils import send_email
@@ -572,13 +572,13 @@ class WithdrawalSummaryAPIView(APIView):
                 })
 
         return Response({
-            "global_summary": {
-                "total_pending_withdrawals_amount": total_pending_amount,
-                "total_pending_withdrawals_count": total_pending_count,
-                "total_approved_withdrawals_amount": total_approved_amount,
-                "total_approved_withdrawals_count": total_approved_count,
-            },
-            "user_summaries": user_summaries
+            # "global_summary": {
+            #     "total_pending_withdrawals_amount": total_pending_amount,
+            #     "total_pending_withdrawals_count": total_pending_count,
+            #     "total_approved_withdrawals_amount": total_approved_amount,
+            #     "total_approved_withdrawals_count": total_approved_count,
+            # },
+         user_summaries
         }, status=status.HTTP_200_OK)
     
 
@@ -1262,16 +1262,33 @@ class AdminComprehensiveReportView(APIView):
         total_partners = partners.count()
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
-        partner_data = PartnerAdminReportSerializer(partners, many=True).data
-        all_orders = PartnerInvestment.objects.all()
-        orders_data = AdminOrderSerializer(all_orders, many=True).data
+        # partner_data = PartnerAdminReportSerializer(partners, many=True).data
+        # all_orders = PartnerInvestment.objects.all()
+        # orders_data = AdminOrderSerializer(all_orders, many=True).data
+
+        pending_qs = Transaction.objects.filter(transaction_type='withdraw', status='pending')
+        approved_qs = Transaction.objects.filter(transaction_type='withdraw', status='approved')
+
+        total_pending_amount = pending_qs.aggregate(total=Sum('amount'))['total'] or 0
+        total_pending_count = pending_qs.count()
+
+        total_approved_amount = approved_qs.aggregate(total=Sum('amount'))['total'] or 0
+        total_approved_count = approved_qs.count()
 
         # print(all_orders)
         return Response({
             'total_partners': total_partners,
-            'total_investment': total_investment,
-            'partners': partner_data,
-            'all_orders': orders_data
+            'total_investment': total_investment, 
+            'withdrawals_report': {
+                'pending': {
+                    'count': total_pending_count,
+                    'total_amount': total_pending_amount
+                }
+                # 'approved': {
+                #     'count': total_approved_count,
+                #     'total_amount': total_approved_amount
+                # }
+            }
         })
     
 class AdminVendorDashboardView(APIView):
@@ -1296,7 +1313,16 @@ class AdminVendorDashboardView(APIView):
             'vendors': serialized_vendors
         })
     
-    
+# class VendorListWithOrdersView(APIView):
+#     permission_classes = [IsAdmin]
+
+#     def get(self, request):
+#         vendors = Vendor.objects.all().prefetch_related(
+#             'orders__items',  # Prefetch orders and order items
+#             'orders__items__product',
+#         )
+#         serializer = VendorDetailSerializer(vendors, many=True)
+#         return Response(serializer.data)
 # class RecentInvestmentsView(APIView):
 #     permission_classes = [IsAdmin]
 
@@ -1304,3 +1330,118 @@ class AdminVendorDashboardView(APIView):
 #         recent_investments = PartnerInvestment.objects.select_related('partner').prefetch_related('product').order_by('-created_at')[:20]
 #         serializer = PartnerInvestmentListSerializer(recent_investments, many=True)
 #         return Response(serializer.data)
+
+class VendorDetailWithOrdersView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, vendor_id):
+        try:
+            vendor = Vendor.objects.prefetch_related(
+                'orders__items',
+                'orders__items__product',
+            ).get(vendor_id=vendor_id)
+        except Vendor.DoesNotExist:
+            return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get limit from query params, default to 10
+        limit = request.query_params.get('limit', 10)
+        try:
+            limit = int(limit)
+        except ValueError:
+            return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Pass the limit to serializer context
+        serializer = VendorDetailSerializer(vendor, context={'order_limit': limit})
+        return Response(serializer.data)
+
+class PartnerDetailWithInvestmentsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, partner_id):
+        try:
+            partner = Users.objects.prefetch_related(
+                'investments__vendor',
+                'investments__product'
+            ).get(id=partner_id, user_type='partner')
+        except Users.DoesNotExist:
+            return Response({"error": "Partner not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get limit from query params, default 10
+        limit = request.query_params.get('limit', 10)
+        try:
+            limit = int(limit)
+        except ValueError:
+            return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PartnerDetailSerializer(partner, context={'investment_limit': limit})
+        return Response(serializer.data)
+    
+class AdminDashboardView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        today = now().date()
+
+        # Get limit from query params, default to 10
+        try:
+            limit = int(request.query_params.get('limit', 10))
+        except ValueError:
+            return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Pending withdrawals
+        
+        pending_qs = Transaction.objects.filter(transaction_type='withdraw', status='pending')
+        approved_qs = Transaction.objects.filter(transaction_type='withdraw', status='approved')
+
+        total_pending_amount = pending_qs.aggregate(total=Sum('amount'))['total'] or 0
+        total_pending_count = pending_qs.count()
+
+        total_approved_amount = approved_qs.aggregate(total=Sum('amount'))['total'] or 0
+        total_approved_count = approved_qs.count()
+
+        # pending_withdrawals_qs = Withdrawal.objects.filter(status='pending')
+        # pending_withdrawals_count = pending_withdrawals_qs.count()
+        # pending_withdrawals_total = pending_withdrawals_qs.aggregate(
+        #     total=Sum('amount')
+        # )['total'] or 0
+
+        # Today's remittance (approved withdrawals today)
+        # todays_remittance_total = Withdrawal.objects.filter(
+        #     status='approved',
+        #     created_at__date=today
+        # ).aggregate(total=Sum('amount'))['total'] or 0
+
+        # Total balance (total investments - total withdrawals)
+        total_investments = PartnerInvestment.objects.aggregate(
+            total=Sum('amount_invested')
+        )['total'] or 0
+        # total_withdrawals = Withdrawal.objects.aggregate(
+        #     total=Sum('amount')
+        # )['total'] or 0
+        total_balance = total_investments - total_approved_amount
+
+        # Recent orders
+        recent_orders_qs = PartnerInvestment.objects.select_related(
+            'partner', 'vendor'
+        ).prefetch_related('product').order_by('-created_at')[:limit]
+
+        recent_orders = [
+            {
+                "order_id": order.order_id,
+                "partner_name": getattr(order.partner, "get_full_name", lambda: str(order.partner))(),
+                "vendor_name": order.vendor.name if order.vendor else None,
+                "status": order.status,
+                "products": [p.name for p in order.product.all()]
+            }
+            for order in recent_orders_qs
+        ]
+
+        return Response({
+            "pending_withdrawals": {
+                "count": total_pending_count,
+                "total_amount": total_pending_amount
+            },
+            "todays_remittance": total_approved_amount,
+            "total_balance": total_balance,
+            "recent_orders": recent_orders
+        }, status=status.HTTP_200_OK)
