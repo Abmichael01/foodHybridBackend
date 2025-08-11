@@ -571,13 +571,7 @@ class WithdrawalSummaryAPIView(APIView):
                     "approved_withdrawals_count": approved_count,
                 })
 
-            return Response({
-            # "global_summary": {
-            #     "total_pending_withdrawals_amount": total_pending_amount,
-            #     "total_pending_withdrawals_count": total_pending_count,
-            #     "total_approved_withdrawals_amount": total_approved_amount,
-            #     "total_approved_withdrawals_count": total_approved_count,
-            # },
+        return Response({
     "user_summaries": user_summaries
 }, status=status.HTTP_200_OK)
 
@@ -1263,7 +1257,7 @@ class AdminComprehensiveReportView(APIView):
         total_partners = partners.count()
         total_investment = PartnerInvestment.objects.aggregate(total=models.Sum('amount_invested'))['total'] or 0
 
-        # partner_data = PartnerAdminReportSerializer(partners, many=True).data
+        partner_data = PartnerAdminReportSerializer(partners, many=True).data
         # all_orders = PartnerInvestment.objects.all()
         # orders_data = AdminOrderSerializer(all_orders, many=True).data
 
@@ -1281,6 +1275,7 @@ class AdminComprehensiveReportView(APIView):
         # print(all_orders)
         return Response({
             'total_partners': total_partners,
+            "partners": partner_data,
             'total_investment': total_investment, 
             'withdrawals_report': {
                 'pending': {
@@ -1467,8 +1462,8 @@ class AdminDashboardView(APIView):
                     "user_name": user.get_full_name() if hasattr(user, 'get_full_name') else str(user),
                     "pending_withdrawals_amount": pending_amount,
                     "pending_withdrawals_count": pending_count,
-                    # "approved_withdrawals_amount": approved_amount,
-                    # "approved_withdrawals_count": approved_count,
+                    "approved_withdrawals_amount": approved_amount,
+                    "approved_withdrawals_count": approved_count,
                 })
 
             # return Response({
