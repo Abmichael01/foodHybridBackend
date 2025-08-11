@@ -403,8 +403,8 @@ class VendorDetailSerializer(serializers.ModelSerializer):
 class VendorOverviewSerializer(serializers.ModelSerializer):
     total_remittance = serializers.SerializerMethodField()
     today_remittance = serializers.SerializerMethodField()
-    total_orders = serializers.SerializerMethodField()
-    orders = serializers.SerializerMethodField()
+    # total_orders = serializers.SerializerMethodField()
+    # orders = serializers.SerializerMethodField()
 
     class Meta:
         model = Vendor
