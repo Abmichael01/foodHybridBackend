@@ -208,7 +208,6 @@ class Meta:
 def __str__(self):
     return f"Investment {self.order_id} by {self.partner}"
 
-
 class ROIPayout(models.Model):
     investment = models.ForeignKey(PartnerInvestment, on_delete=models.CASCADE, related_name="roi_payouts")
     cycle_number = models.PositiveSmallIntegerField()
@@ -224,19 +223,16 @@ class ROIPayout(models.Model):
 
     def __str__(self):
         return f"Cycle {self.cycle_number} - {self.amount} on {self.payout_date}"
+def get_default_vendor_pk():
+    return Vendor.objects.first().pk
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    vendor = models.ForeignKey(Vendor, related_name='orders', on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, related_name='orders', on_delete=models.CASCADE, default=get_default_vendor_pk)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=30, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    def set_default_vendor_id(apps, schema_editor):
-        Vendor = apps.get_model('your_app_name', 'Vendor')
-        for order in Order.objects.all():
-            order.vendor_id = "VEND-" + str(order.id)
-            order.save()
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)

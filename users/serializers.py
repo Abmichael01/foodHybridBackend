@@ -408,9 +408,8 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ['id', 'name', 'email', 'phone', 'address',
-                  'total_remittance', 'today_remittance',
-                  'total_orders', 'orders']
+        fields = ['id','vendor_id', 'name', 'email', 'phone', 'address',
+                  'total_remittance', 'today_remittance']
 
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
