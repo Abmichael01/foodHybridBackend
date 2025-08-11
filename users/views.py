@@ -2,7 +2,7 @@ from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification
-from shop.models import PartnerInvestment, ROIPayout, Vendor
+from shop.models import Order, PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
@@ -128,13 +128,13 @@ class VendorUpdateView(UpdateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
     permission_classes = [IsAdmin]
-    lookup_field = 'id'
+    lookup_field = 'vendor_id'
     http_method_names = ['put', 'patch']
 
 class VendorDeleteView(DestroyAPIView):
     queryset = Vendor.objects.all()
     permission_classes = [IsAdmin]
-    lookup_field = 'id'
+    lookup_field = 'vendor_id'
 
 class VendorPagination(PageNumberPagination):
     page_size = 10  # default per page
@@ -1333,6 +1333,7 @@ class VendorDetailWithOrdersView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request, vendor_id):
+        today = now().date()
         try:
             vendor = Vendor.objects.prefetch_related(
                 # 'orders__items',
@@ -1348,10 +1349,28 @@ class VendorDetailWithOrdersView(APIView):
             limit = int(limit)
         except ValueError:
             return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+        
+# Get all order references for the vendor
+        vendor_order_refs = Order.objects.filter(vendor=vendor).values_list('reference', flat=True)
 
+# Filter transactions with those order_ids and remittance type
+        todays_remittance = Transaction.objects.filter(
+            order_id__in=vendor_order_refs,
+            transaction_type='remittance',
+            created_at__date=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        total_remittance = Transaction.objects.filter(
+            order_id__in=vendor_order_refs,
+            transaction_type='remittance',
+        ).aggregate(total=Sum('amount'))['total'] or 0
         # Pass the limit to serializer context
         serializer = VendorDetailSerializer(vendor, context={'order_limit': limit})
-        return Response(serializer.data)
+        return Response({
+            "today_remittance":todays_remittance,
+            "total_remittance":total_remittance,
+           "vendor_details": serializer.data
+        })
 
 class PartnerDetailWithInvestmentsView(APIView):
     permission_classes = [IsAdmin]
