@@ -1681,36 +1681,36 @@ class AdminDashboardView(APIView):
             pending_count = user_pending.count()
             approved_count = user_approved.count()
 
-            if pending_amount > 0 or approved_amount > 0:
-                user_summaries.append({
-                    "user_id": user.id,
-                    "user_name": user.get_full_name() if hasattr(user, 'get_full_name') else str(user),
-                    "pending_withdrawals_amount": pending_amount,
-                    "pending_withdrawals_count": pending_count,
-                    "approved_withdrawals_amount": approved_amount,
-                    "approved_withdrawals_count": approved_count,
-                })
+            # if pending_amount > 0 or approved_amount > 0:
+            #     user_summaries.append({
+            #         "user_id": user.id,
+            #         "user_name": user.get_full_name() if hasattr(user, 'get_full_name') else str(user),
+            #         "pending_withdrawals_amount": pending_amount,
+            #         "pending_withdrawals_count": pending_count,
+            #         "approved_withdrawals_amount": approved_amount,
+            #         "approved_withdrawals_count": approved_count,
+            #     })
 
-            # withdrawals_data = []
-            for tx in pending_qs:
-                partner = tx.user
-                partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
-                balance = getattr(partner.wallet, 'balance', 0)
-                if user.profile_picture:
-                    profile_picture_url = user.profile_picture.url
-                else:
-                    profile_picture_url = None
+        # withdrawals_data = []
+        for tx in pending_qs:
+            partner = tx.user
+            partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
+            balance = getattr(partner.wallet, 'balance', 0)
+            if user.profile_picture:
+                profile_picture_url = user.profile_picture.url
+            else:
+                profile_picture_url = None
 
 
-                user_summaries.append({
-                    "partner_name": partner_name,
-                    "profile_pic": profile_picture_url,
-                    "amount": tx.amount,
-                    "balance": balance,
-                    "from_user": tx.from_user,
-                    "to": tx.to,  # Or dynamically from transaction if available
-                    "requested_at": tx.created_at
-                })
+            user_summaries.append({
+                "partner_name": partner_name,
+                "profile_pic": profile_picture_url,
+                "amount": tx.amount,
+                "balance": balance,
+                "from_user": tx.from_user,
+                "to": tx.to,  # Or dynamically from transaction if available
+                "requested_at": tx.created_at
+            })
 
             # return Response({
             # "global_summary": {
