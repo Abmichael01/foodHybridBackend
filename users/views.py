@@ -136,6 +136,20 @@ class VendorDeleteView(DestroyAPIView):
     permission_classes = [IsAdmin]
     lookup_field = 'vendor_id'
 
+    def delete(self, request, *args, **kwargs):
+        vendor_ids = request.data.get("vendor_ids")  # Expecting a list for multiple delete
+
+        if vendor_ids:
+            # Multiple deletion
+            deleted_count, _ = Vendor.objects.filter(vendor_id__in=vendor_ids).delete()
+            return Response(
+                {"message": f"{deleted_count} vendors deleted successfully."},
+                status=status.HTTP_200_OK
+            )
+        else:
+            # Single deletion (default DestroyAPIView behavior)
+            return super().delete(request, *args, **kwargs)
+
 class VendorPagination(PageNumberPagination):
     page_size = 10  # default per page
     page_size_query_param = 'page_size'  # allow override via query param
@@ -529,53 +543,95 @@ class DriverCreateView(APIView):
         return Response(serializer.errors, status=400)
     
 
-
 class WithdrawalSummaryAPIView(APIView):
-    permission_classes=[IsAdmin]
+    permission_classes = [IsAdmin]
+
     def get(self, request, *args, **kwargs):
-        # Global totals
-        pending_qs = Transaction.objects.filter(transaction_type='withdraw', status='pending')
-        approved_qs = Transaction.objects.filter(transaction_type='withdraw', status='approved')
+        request_time = now()
 
-        total_pending_amount = pending_qs.aggregate(total=Sum('amount'))['total'] or 0
-        total_pending_count = pending_qs.count()
+        # Get all pending withdrawal transactions for partners
+        pending_qs = Transaction.objects.filter(
+            transaction_type='withdraw',
+            status='pending',
+            user__user_type="partner"
+        ).select_related('user', 'user__wallet')
 
-        total_approved_amount = approved_qs.aggregate(total=Sum('amount'))['total'] or 0
-        total_approved_count = approved_qs.count()
+        # Prepare response list
+        withdrawals_data = []
+        for tx in pending_qs:
+            partner = tx.user
+            partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
+            balance = getattr(partner.wallet, 'balance', 0)
 
-        # Per-user summaries
-        user_summaries = []
-        users = Users.objects.all()
-
-        for user in users:
-            user_pending = Transaction.objects.filter(
-                user=user, transaction_type='withdraw', status='pending'
-            )
-            user_approved = Transaction.objects.filter(
-                user=user, transaction_type='withdraw', status='approved'
-            )
-
-            pending_amount = user_pending.aggregate(total=Sum('amount'))['total'] or 0
-            approved_amount = user_approved.aggregate(total=Sum('amount'))['total'] or 0
-
-            pending_count = user_pending.count()
-            approved_count = user_approved.count()
-
-            if pending_amount > 0 or approved_amount > 0:
-                user_summaries.append({
-                    "user_id": user.id,
-                    "user_name": user.get_full_name() if hasattr(user, 'get_full_name') else str(user),
-                    "pending_withdrawals_amount": pending_amount,
-                    "pending_withdrawals_count": pending_count,
-                    "approved_withdrawals_amount": approved_amount,
-                    "approved_withdrawals_count": approved_count,
-                })
+            withdrawals_data.append({
+                "partner_name": partner_name,
+                "profile_pic": partner.profile_picture,
+                "amount": tx.amount,
+                "balance": balance,
+                "from_user": tx.from_user,
+                "to": tx.to,  # Or dynamically from transaction if available
+                "requested_at": tx.created_at
+            })
 
         return Response({
-    "user_summaries": user_summaries
-}, status=status.HTTP_200_OK)
+            "request_time": request_time.isoformat(),
+            "withdrawals": withdrawals_data
+        }, status=status.HTTP_200_OK)
 
-    
+
+# class WithdrawalSummaryAPIView(APIView):
+#     permission_classes = [IsAdmin]
+
+#     def get(self, request, *args, **kwargs):
+
+#         # Global queries
+#         pending_qs = Transaction.objects.filter(transaction_type='withdraw', status='pending')
+#         approved_qs = Transaction.objects.filter(transaction_type='withdraw', status='approved')
+
+#         total_pending_amount = pending_qs.aggregate(total=Sum('amount'))['total'] or 0
+#         total_pending_count = pending_qs.count()
+
+#         total_approved_amount = approved_qs.aggregate(total=Sum('amount'))['total'] or 0
+#         total_approved_count = approved_qs.count()
+
+#         # Per-user summaries
+#         user_summaries = []
+#         partners = Users.objects.filter(user_type="partner")  # Only partners
+#         partner_data_map = {
+#             p.id: data
+#             for p, data in zip(partners, PartnerAdminReportSerializer(partners, many=True).data)
+#         }
+
+#         for user in partners:
+#             user_pending = pending_qs.filter(user=user)
+#             user_approved = approved_qs.filter(user=user)
+
+#             pending_amount = user_pending.aggregate(total=Sum('amount'))['total'] or 0
+#             approved_amount = user_approved.aggregate(total=Sum('amount'))['total'] or 0
+
+#             pending_count = user_pending.count()
+#             approved_count = user_approved.count()
+
+#             if pending_amount > 0 or approved_amount > 0:
+#                 user_summaries.append({
+#                     "partner_details": partner_data_map[user.id],  # Full partner details
+#                     "pending_withdrawals_amount": pending_amount,
+#                     "pending_withdrawals_count": pending_count,
+#                     "requested_at":
+#                     # "approved_withdrawals_amount": approved_amount,
+#                     # "approved_withdrawals_count": approved_count,
+#                 })
+
+#         return Response({
+#             # "request_time": request_time.isoformat(),
+#             "global_summary": {
+#                 "total_pending_amount": total_pending_amount,
+#                 "total_pending_count": total_pending_count,
+#                 "total_approved_amount": total_approved_amount,
+#                 "total_approved_count": total_approved_count
+#             },
+#             "user_summaries": user_summaries
+#         }, status=status.HTTP_200_OK)  
 
 # class AdminRecentOrdersView(APIView):
 #     permission_classes = [IsAdmin]
@@ -1334,6 +1390,7 @@ class VendorDetailWithOrdersView(APIView):
 
     def get(self, request, vendor_id):
         today = now().date()
+        search_query = request.query_params.get('search', '').strip()
         try:
             vendor = Vendor.objects.prefetch_related(
                 # 'orders__items',
@@ -1364,12 +1421,48 @@ class VendorDetailWithOrdersView(APIView):
             order_id__in=vendor_order_refs,
             transaction_type='remittance',
         ).aggregate(total=Sum('amount'))['total'] or 0
+
+        # Transactions list (filtered by "remittance" type)
+        transactions_qs = Transaction.objects.filter(
+            order_id__in=vendor_order_refs,
+            transaction_type='remittance'
+        )
+
+        # Apply search filter
+        if search_query:
+            transactions_qs = transactions_qs.filter(
+                Q(order_id__icontains=search_query) |
+                Q(reference__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+
+        # Paginate or limit results
+        transactions_qs = transactions_qs.order_by('-created_at')[:limit]
+
+        transactions_data = [
+            {
+                "transaction_id": tx.id,
+                "order_id": tx.order_id,
+                "amount": tx.amount,
+                "status": tx.status,
+                "reference": tx.reference,
+                "description": tx.description,
+                "created_at": tx.created_at,
+                "payment_method": tx.payment_method,
+                "bank_name": tx.bank_name,
+                "account_number": tx.account_number,
+                "account_name": tx.account_name,
+            }
+            for tx in transactions_qs
+        ]
+
         # Pass the limit to serializer context
         serializer = VendorDetailSerializer(vendor, context={'order_limit': limit})
         return Response({
             "today_remittance":todays_remittance,
             "total_remittance":total_remittance,
-           "vendor_details": serializer.data
+           "vendor_details": serializer.data,
+            "transactions": transactions_data
         })
 
 class PartnerDetailWithInvestmentsView(APIView):
@@ -1485,6 +1578,22 @@ class AdminDashboardView(APIView):
                     "approved_withdrawals_count": approved_count,
                 })
 
+        withdrawals_data = []
+        for tx in pending_qs:
+            partner = tx.user
+            partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
+            balance = getattr(partner.wallet, 'balance', 0)
+
+            withdrawals_data.append({
+                "partner_name": partner_name,
+                "profile_pic": partner.profile_picture,
+                "amount": tx.amount,
+                "balance": balance,
+                "from_user": tx.from_user,
+                "to": tx.to,  # Or dynamically from transaction if available
+                "requested_at": tx.created_at
+            })
+
             # return Response({
             # "global_summary": {
             #     "total_pending_withdrawals_amount": total_pending_amount,
@@ -1500,51 +1609,56 @@ class AdminDashboardView(APIView):
             "todays_remittance": total_approved_amount,
             "total_balance": total_balance,
             "recent_orders": recent_orders,
-            "withdrawal_request": user_summaries
+            "withdrawal_request": user_summaries,
+            "withdrawals": withdrawals_data
         }, status=status.HTTP_200_OK)
-    
+
 class AdminROICycleBreakdownView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
         today_date = now().date()
 
-        # Today's remittance (sum of ROI paid today)
+        # Today's ROI payouts
         todays_remittance = ROIPayout.objects.filter(
-            paid_date__date=today_date,
-            status="paid"
+            paid_at__date=today_date,
+            is_paid=True
         ).aggregate(total=Sum("amount"))["total"] or 0
 
-        # Total remittance (sum of all ROI paid)
+        # Total ROI payouts
         total_remittance = ROIPayout.objects.filter(
-            status="paid"
+            is_paid=True
         ).aggregate(total=Sum("amount"))["total"] or 0
 
-        investments = PartnerInvestment.objects.select_related("partner", "vendor", "product")
+        # Prefetch related objects (ManyToMany needs prefetch_related)
+        investments = PartnerInvestment.objects.select_related(
+            "partner", "vendor"
+        ).prefetch_related("product", "roi_payouts")
 
         # Pending remittance stats
         pending_remittance_qs = investments.filter(status="pending")
-        pending_remittance_amount = pending_remittance_qs.aggregate(total=Sum("total_roi"))["total"] or 0
+        pending_remittance_amount = pending_remittance_qs.aggregate(total=Sum("roi_payouts__amount"))["total"] or 0
         pending_remittance_count = pending_remittance_qs.count()
 
         orders_data = []
         for inv in investments:
-            roi_schedule = inv.generate_roi_payout_schedule()
-            roi_cycles = []
-            for idx, payout in enumerate(roi_schedule, start=1):
-                roi_cycles.append({
-                    "cycle": idx,
-                    "payout_date": payout["payout_date"],
-                    "amount": payout["amount"],
-                    "status": payout.get("status", "pending")
-                })
+            roi_cycles = [
+                {
+                    "cycle": payout.cycle_number,
+                    "payout_date": payout.payout_date,
+                    "amount": payout.amount,
+                    "status": "paid" if payout.is_paid else "pending"
+                }
+                for payout in inv.roi_payouts.all().order_by("cycle_number")
+            ]
 
             orders_data.append({
                 "order_id": inv.order_id,
-                "partner_name": inv.partner.name if inv.partner else None,
+                "partner_name": inv.partner.get_full_name() if inv.partner else None,
                 "vendor_name": inv.vendor.name if inv.vendor else None,
-                "product_name": inv.product.name if inv.product else None,
-                "total_roi": inv.total_roi,
+                "products": [p.name for p in inv.product.all()],
+                "amount_invested": inv.amount_invested,
+                "total_roi": inv.total_roi(),
                 "roi_cycles": roi_cycles,
                 "status": inv.status
             })
@@ -1557,7 +1671,7 @@ class AdminROICycleBreakdownView(APIView):
                 "count": pending_remittance_count
             },
             "orders": orders_data
-        })
+        }, status=status.HTTP_200_OK)
 
 
 class PartnerListView(APIView):

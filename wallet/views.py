@@ -353,8 +353,8 @@ class WithdrawWalletView(APIView):
         withdrawal_id = generate_reference()
         Transaction.objects.create(
             user=user,
-            from_user="Available Balance",
-            to = to,
+            from_user="Portfolio",
+            to = "Wallet",
             transaction_type="withdraw",
             amount=amount,
             status="pending",  # may require admin approval
