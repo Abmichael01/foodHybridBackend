@@ -1737,6 +1737,48 @@ class AdminROICycleBreakdownView(APIView):
             "orders": orders_data
         }, status=status.HTTP_200_OK)
 
+class AdminSingleROICycleBreakdownView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, order_id):
+        try:
+            inv = PartnerInvestment.objects.select_related(
+                "partner", "vendor"
+            ).prefetch_related(
+                "product", "roi_payouts"
+            ).get(order_id=order_id)
+        except PartnerInvestment.DoesNotExist:
+            return Response({"error": "Investment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # ROI cycles for this specific investment
+        roi_cycles = [
+            {
+                "cycle": payout.cycle_number,
+                "payout_date": payout.payout_date,
+                "amount": payout.amount,
+                "status": "paid" if payout.is_paid else "pending"
+            }
+            for payout in inv.roi_payouts.all().order_by("cycle_number")
+        ]
+        if inv.partner.profile_picture:
+            profile_picture_url = inv.partner.profile_picture.url
+        else:
+            profile_picture_url = None
+
+
+        data = {
+            "order_id": inv.order_id,
+            "partner_name": inv.partner.get_full_name() if inv.partner else None,
+            "partner_picture": profile_picture_url,
+            "vendor_name": inv.vendor.name if inv.vendor else None,
+            "products": [p.name for p in inv.product.all()],
+            "amount_invested": inv.amount_invested,
+            "total_roi": inv.total_roi(),
+            "roi_cycles": roi_cycles,
+            "status": inv.status
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 class PartnerListView(APIView):
     permission_classes = [IsAdmin]
