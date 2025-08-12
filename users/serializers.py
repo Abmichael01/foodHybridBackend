@@ -98,64 +98,95 @@ class ROIOrderBreakdownSerializer(serializers.ModelSerializer):
         ]
 
 
+# class AdminOrderSerializer(serializers.ModelSerializer):
+#     partner_name = serializers.SerializerMethodField()
+#     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+#     partner_profile_picture = serializers.SerializerMethodField()
+#     vendor_profile_picture = serializers.ImageField(source='vendor.profile_picture', read_only=True)
+#     vendor_address = serializers.CharField(source='vendor.address', read_only=True)
+#     total_amount = serializers.SerializerMethodField()
+#     items = OrderItemSerializer(many=True, read_only=True)
+#     order_id = serializers.SerializerMethodField()
+#     product = serializers.SerializerMethodField()
+#     roi_cycles = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Order
+#         fields = [
+#             'id', 'created_at', 'partner_name', 'partner_profile_picture',
+#             'vendor_name', 'vendor_profile_picture', 'vendor_address',
+#             'total_amount', 'items', 'order_id', 'product', 'status', 'roi_cycles'
+#         ]
+
+#     def get_total_amount(self, obj):
+#         if hasattr(obj, 'items'):
+#             return sum(product.price * product.quantity for product in obj.items.all())
+#         elif hasattr(obj, 'amount_invested'):
+#             return obj.amount_invested
+#         return 0
+
+#     def get_order_id(self, obj):
+#         investment = getattr(obj, 'partnerinvestment', None)
+#         if investment:
+#             return getattr(investment, 'order_id', None)
+#         return None
+
+#     def get_product(self, obj):
+#         investment = getattr(obj, 'partnerinvestment', None)
+#         if investment and hasattr(investment, 'product'):
+#             return [p.name for p in investment.product.all()]
+#         return []
+
+#     def get_partner_name(self, obj):
+#         user = getattr(obj, 'partner', None)
+#         if not user:
+#             return None
+#         return (
+#             getattr(user, 'name', None)
+#             or f"{user.first_name} {user.last_name}".strip()
+#             or user.username
+#         )
+
+#     def get_partner_profile_picture(self, obj):
+#         partner = getattr(obj, 'partner', None)
+#         return partner.profile_picture.url if partner and partner.profile_picture else None
+
+#     def get_roi_cycles(self, obj):
+#         investment = getattr(obj, 'partnerinvestment', None)
+#         if not investment:
+#             return []
+#         payouts = investment.roi_payouts.all().order_by("cycle_number")
+#         return ROIPayoutSerializer(payouts, many=True).data
+
+
 class AdminOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.SerializerMethodField()
-    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     partner_profile_picture = serializers.SerializerMethodField()
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     vendor_profile_picture = serializers.ImageField(source='vendor.profile_picture', read_only=True)
     vendor_address = serializers.CharField(source='vendor.address', read_only=True)
-    total_amount = serializers.SerializerMethodField()
-    items = OrderItemSerializer(many=True, read_only=True)
-    order_id = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()
     roi_cycles = serializers.SerializerMethodField()
 
     class Meta:
-        model = Order
+        model = PartnerInvestment
         fields = [
             'id', 'created_at', 'partner_name', 'partner_profile_picture',
             'vendor_name', 'vendor_profile_picture', 'vendor_address',
-            'total_amount', 'items', 'order_id', 'product', 'status', 'roi_cycles'
+            'amount_invested', 'order_id', 'product', 'status', 'roi_cycles'
         ]
 
-    def get_total_amount(self, obj):
-        if hasattr(obj, 'items'):
-            return sum(product.price * product.quantity for product in obj.items.all())
-        elif hasattr(obj, 'amount_invested'):
-            return obj.amount_invested
-        return 0
-
-    def get_order_id(self, obj):
-        investment = getattr(obj, 'partnerinvestment', None)
-        if investment:
-            return getattr(investment, 'order_id', None)
-        return None
-
-    def get_product(self, obj):
-        investment = getattr(obj, 'partnerinvestment', None)
-        if investment and hasattr(investment, 'product'):
-            return [p.name for p in investment.product.all()]
-        return []
-
     def get_partner_name(self, obj):
-        user = getattr(obj, 'partner', None)
-        if not user:
-            return None
-        return (
-            getattr(user, 'name', None)
-            or f"{user.first_name} {user.last_name}".strip()
-            or user.username
-        )
+        return obj.partner.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
 
     def get_partner_profile_picture(self, obj):
-        partner = getattr(obj, 'partner', None)
-        return partner.profile_picture.url if partner and partner.profile_picture else None
+        return obj.partner.profile_picture.url if obj.partner and obj.partner.profile_picture else None
+
+    def get_product(self, obj):
+        return [p.name for p in obj.product.all()]
 
     def get_roi_cycles(self, obj):
-        investment = getattr(obj, 'partnerinvestment', None)
-        if not investment:
-            return []
-        payouts = investment.roi_payouts.all().order_by("cycle_number")
+        payouts = obj.roi_payouts.all().order_by("cycle_number")
         return ROIPayoutSerializer(payouts, many=True).data
 
 class CompleteRegistrationSerializer(serializers.Serializer):
