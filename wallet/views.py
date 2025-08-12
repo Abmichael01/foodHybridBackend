@@ -371,13 +371,13 @@ class WithdrawWalletView(APIView):
             to_user=bank_name,
             available_balance_at_time=wallet.balance
                 )   
-        admin_users = Users.objects.filter(is_staff=True)  # or is_superuser=True
-        for admin in admin_users:
-            Notification.objects.create(
+        # admin_users = Users.objects.filter(is_staff=True)  # or is_superuser=True
+        # for admin in admin_users:
+        Notification.objects.create(
                 user=user,
                 title="Withdrawal!",
                 message=f"Withdrawal: Request of {amount} from {user.first_name} {user.last_name}",
-                event_type="admin" and "withdraw",
+                event_type="admin",
                 from_user="wallet",
                 to_user=bank_name,
             )
