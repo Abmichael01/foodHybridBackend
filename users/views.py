@@ -1691,26 +1691,26 @@ class AdminDashboardView(APIView):
                     "approved_withdrawals_count": approved_count,
                 })
 
-        # withdrawals_data = []
-        for tx in pending_qs:
-            partner = tx.user
-            partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
-            balance = getattr(partner.wallet, 'balance', 0)
-            if user.profile_picture:
-                profile_picture_url = user.profile_picture.url
-            else:
-                profile_picture_url = None
+            # withdrawals_data = []
+            for tx in pending_qs:
+                partner = tx.user
+                partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
+                balance = getattr(partner.wallet, 'balance', 0)
+                if user.profile_picture:
+                    profile_picture_url = user.profile_picture.url
+                else:
+                    profile_picture_url = None
 
 
-            user_summaries.append({
-                "partner_name": partner_name,
-                "profile_pic": profile_picture_url,
-                "amount": tx.amount,
-                "balance": balance,
-                "from_user": tx.from_user,
-                "to": tx.to,  # Or dynamically from transaction if available
-                "requested_at": tx.created_at
-            })
+                user_summaries.append({
+                    "partner_name": partner_name,
+                    "profile_pic": profile_picture_url,
+                    "amount": tx.amount,
+                    "balance": balance,
+                    "from_user": tx.from_user,
+                    "to": tx.to,  # Or dynamically from transaction if available
+                    "requested_at": tx.created_at
+                })
 
             # return Response({
             # "global_summary": {
@@ -1727,7 +1727,7 @@ class AdminDashboardView(APIView):
             "todays_remittance": total_approved_amount,
             "total_balance": total_balance,
             "recent_orders": recent_orders,
-            # "withdrawal_request": user_summaries
+            "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
 
 class AdminROICycleBreakdownView(APIView):
