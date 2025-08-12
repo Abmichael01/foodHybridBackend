@@ -39,7 +39,7 @@ urlpatterns = [
     path('admin/vendors/dashboard/', AdminVendorDashboardView.as_view(), name='admin-vendor-dashboard'),
     path('admin/vendors/<str:vendor_id>/', VendorDetailWithOrdersView.as_view(), name='vendor-detail-with-orders'),
     path('admin/partners/<int:partner_id>/', PartnerDetailWithInvestmentsView.as_view(), name='partner-list'),
-    path('admin/partners/', PartnerListView.as_view(), name='partner-detail-with-investments'),
+    # path('admin/partners/', PartnerListView.as_view(), name='partner-detail-with-investmen/ts'),
     path('admin/orders/', AdminROICycleBreakdownView.as_view(), name='partner-detail-with-investments'),
 
 ]

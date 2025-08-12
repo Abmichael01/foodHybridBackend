@@ -431,7 +431,7 @@ class VendorDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ['vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at', 'recent_orders']
+        fields = ['vendor_id', 'name', 'email', 'phone', 'address', 'profile_picture', 'created_at', 'recent_orders']
 
     def get_recent_orders(self, obj):
         limit = self.context.get('order_limit', 10)  # Default if not provided
@@ -595,13 +595,14 @@ class PartnerDetailSerializer(serializers.ModelSerializer):
 
 
 class PartnerListSerializer(serializers.ModelSerializer):
+    partner_id = serializers.IntegerField(source="partner.id", read_only=True)
     total_investments = serializers.SerializerMethodField()
     total_roi = serializers.SerializerMethodField()
     wallet_balance = serializers.DecimalField(source="wallet.balance", max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Users
-        fields = ['id','partner_id', 'name', 'email', 'phone', 'profile_picture', 'total_investments', 'total_roi', 'wallet_balance']
+        fields = ['partner_id', 'name', 'email', 'phone', 'profile_picture', 'total_investments', 'total_roi', 'wallet_balance']
 
     def get_total_investments(self, obj):
         return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('amount'))['total'] or 0
