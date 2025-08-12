@@ -212,7 +212,6 @@ class ROIPayout(models.Model):
     investment = models.ForeignKey(PartnerInvestment, on_delete=models.CASCADE, related_name="roi_payouts")
     cycle_number = models.PositiveSmallIntegerField()
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    # from_date = models.DateField(null=True, blank=True) 
     payout_date = models.DateField()
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True, blank=True)

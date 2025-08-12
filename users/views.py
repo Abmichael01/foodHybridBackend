@@ -6,7 +6,7 @@ from shop.models import Order, PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, PartnerListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
 from django.utils import timezone
 from datetime import date, datetime
 from foodhybrid.utils import send_email
@@ -1502,3 +1502,68 @@ class AdminDashboardView(APIView):
             "recent_orders": recent_orders,
             "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
+    
+class AdminROICycleBreakdownView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        today_date = now().date()
+
+        # Today's remittance (sum of ROI paid today)
+        todays_remittance = ROIPayout.objects.filter(
+            paid_date__date=today_date,
+            status="paid"
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        # Total remittance (sum of all ROI paid)
+        total_remittance = ROIPayout.objects.filter(
+            status="paid"
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        investments = PartnerInvestment.objects.select_related("partner", "vendor", "product")
+
+        # Pending remittance stats
+        pending_remittance_qs = investments.filter(status="pending")
+        pending_remittance_amount = pending_remittance_qs.aggregate(total=Sum("total_roi"))["total"] or 0
+        pending_remittance_count = pending_remittance_qs.count()
+
+        orders_data = []
+        for inv in investments:
+            roi_schedule = inv.generate_roi_payout_schedule()
+            roi_cycles = []
+            for idx, payout in enumerate(roi_schedule, start=1):
+                roi_cycles.append({
+                    "cycle": idx,
+                    "payout_date": payout["payout_date"],
+                    "amount": payout["amount"],
+                    "status": payout.get("status", "pending")
+                })
+
+            orders_data.append({
+                "order_id": inv.order_id,
+                "partner_name": inv.partner.name if inv.partner else None,
+                "vendor_name": inv.vendor.name if inv.vendor else None,
+                "product_name": inv.product.name if inv.product else None,
+                "total_roi": inv.total_roi,
+                "roi_cycles": roi_cycles,
+                "status": inv.status
+            })
+
+        return Response({
+            "todays_remittance": todays_remittance,
+            "total_remittance": total_remittance,
+            "pending_remittance": {
+                "amount": pending_remittance_amount,
+                "count": pending_remittance_count
+            },
+            "orders": orders_data
+        })
+
+
+class PartnerListView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        partners = Users.objects.all()
+        serializer = PartnerListSerializer(partners, many=True, context={'request': request})
+        return Response(serializer.data)

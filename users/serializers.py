@@ -73,27 +73,55 @@ class VendorSerializer(serializers.ModelSerializer):
         model = Vendor
         fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
 
+class ROIPayoutSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ROIPayout
+        fields = ["cycle_number", "payout_date", "amount", "status", "is_paid", "paid_at"]
+
+    def get_status(self, obj):
+        return "paid" if obj.is_paid else "pending"
+    
+
+class ROIOrderBreakdownSerializer(serializers.ModelSerializer):
+    vendor_name = serializers.CharField(source="vendor.name")
+    partner_name = serializers.CharField(source="partner.name")
+    product_name = serializers.CharField(source="product.name")
+    roi_cycles = ROIPayoutSerializer(source="roi_payouts", many=True)
+
+    class Meta:
+        model = PartnerInvestment
+        fields = [
+            "id", "order_id", "vendor_name", "partner_name", "product_name",
+            "amount_invested", "total_roi", "roi_cycles"
+        ]
+
+
 class AdminOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.SerializerMethodField()
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    partner_profile_picture = serializers.SerializerMethodField()
+    vendor_profile_picture = serializers.ImageField(source='vendor.profile_picture', read_only=True)
+    vendor_address = serializers.CharField(source='vendor.address', read_only=True)
     total_amount = serializers.SerializerMethodField()
     items = OrderItemSerializer(many=True, read_only=True)
     order_id = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()
+    roi_cycles = serializers.SerializerMethodField()
 
     class Meta:
-        model = Order  # Still default for Orders
+        model = Order
         fields = [
-            'id', 'created_at', 'partner_name', 'vendor_name',
-            'total_amount', 'items', 'order_id', 'product', 'status'
+            'id', 'created_at', 'partner_name', 'partner_profile_picture',
+            'vendor_name', 'vendor_profile_picture', 'vendor_address',
+            'total_amount', 'items', 'order_id', 'product', 'status', 'roi_cycles'
         ]
 
     def get_total_amount(self, obj):
-        if hasattr(obj, 'items'):  
-            # Order case
+        if hasattr(obj, 'items'):
             return sum(product.price * product.quantity for product in obj.items.all())
-        elif hasattr(obj, 'amount_invested'):  
-            # PartnerInvestment case
+        elif hasattr(obj, 'amount_invested'):
             return obj.amount_invested
         return 0
 
@@ -119,6 +147,16 @@ class AdminOrderSerializer(serializers.ModelSerializer):
             or user.username
         )
 
+    def get_partner_profile_picture(self, obj):
+        partner = getattr(obj, 'partner', None)
+        return partner.profile_picture.url if partner and partner.profile_picture else None
+
+    def get_roi_cycles(self, obj):
+        investment = getattr(obj, 'partnerinvestment', None)
+        if not investment:
+            return []
+        payouts = investment.roi_payouts.all().order_by("cycle_number")
+        return ROIPayoutSerializer(payouts, many=True).data
 
 class CompleteRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -307,6 +345,7 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
         ]
 
 class PartnerAdminReportSerializer(serializers.Serializer):
+    partner_id = serializers.IntegerField(source="partner.id", read_only=True)
     name = serializers.SerializerMethodField()
     email = serializers.EmailField()
     # phone = serializers.CharField()
@@ -554,3 +593,18 @@ class PartnerDetailSerializer(serializers.ModelSerializer):
         investments = obj.investments.all().select_related('vendor').prefetch_related('product')[:limit]
         return InvestmentSerializer(investments, many=True).data
 
+
+class PartnerListSerializer(serializers.ModelSerializer):
+    total_investments = serializers.SerializerMethodField()
+    total_roi = serializers.SerializerMethodField()
+    wallet_balance = serializers.DecimalField(source="wallet.balance", max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Users
+        fields = ['id','partner_id', 'name', 'email', 'phone', 'profile_picture', 'total_investments', 'total_roi', 'wallet_balance']
+
+    def get_total_investments(self, obj):
+        return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('amount'))['total'] or 0
+
+    def get_total_roi(self, obj):
+        return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('total_roi'))['total'] or 0
