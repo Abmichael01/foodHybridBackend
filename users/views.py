@@ -578,10 +578,7 @@ class WithdrawalSummaryAPIView(APIView):
                 "requested_at": tx.created_at
             })
 
-        return Response({
-            "request_time": request_time.isoformat(),
-            "withdrawals": withdrawals_data
-        }, status=status.HTTP_200_OK)
+        return Response(withdrawals_data, status=status.HTTP_200_OK)
 
 
 # class WithdrawalSummaryAPIView(APIView):
