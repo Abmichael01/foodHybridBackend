@@ -1787,3 +1787,12 @@ class PartnerListView(APIView):
         partners = Users.objects.all()
         serializer = PartnerListSerializer(partners, many=True, context={'request': request})
         return Response(serializer.data)
+    
+
+class AdminNotificationListView(APIView):
+    permission_classes = [IsAdmin]  
+
+    def get(self, request):
+        notifications = Notification.objects.filter(event_type="admin").order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)

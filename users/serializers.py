@@ -609,3 +609,8 @@ class PartnerListSerializer(serializers.ModelSerializer):
 
     def get_total_roi(self, obj):
         return PartnerInvestment.objects.filter(partner=obj).aggregate(total=models.Sum('total_roi'))['total'] or 0
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
