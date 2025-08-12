@@ -1827,6 +1827,7 @@ class AdminSingleROICycleBreakdownView(APIView):
             "products": [p.name for p in inv.product.all()],
             "amount_invested": inv.amount_invested,
             "total_roi": inv.total_roi(),
+            "roi_rate": inv.roi_rate,
             "roi_cycles": roi_cycles,
             "status": inv.status
         }

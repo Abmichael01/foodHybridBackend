@@ -119,6 +119,17 @@ class ProductImage(models.Model):
     image = models.ImageField(upload_to='product_images/')
 
 
+def get_default_vendor_pk():
+    return Vendor.objects.first().pk
+
+class Order(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, related_name='orders', on_delete=models.CASCADE, default=get_default_vendor_pk)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reference = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=30, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class PartnerInvestment(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -128,7 +139,8 @@ class PartnerInvestment(models.Model):
         ('settled', 'Settled'),
         ('delivered', 'Delivered')
     )
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')    
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')  
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="partnerinvestment")
     partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments")
     product = models.ManyToManyField(Product, related_name="investments")
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2)
@@ -222,15 +234,6 @@ class ROIPayout(models.Model):
 
     def __str__(self):
         return f"Cycle {self.cycle_number} - {self.amount} on {self.payout_date}"
-def get_default_vendor_pk():
-    return Vendor.objects.first().pk
-class Order(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    vendor = models.ForeignKey(Vendor, related_name='orders', on_delete=models.CASCADE, default=get_default_vendor_pk)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    reference = models.CharField(max_length=100, unique=True)
-    status = models.CharField(max_length=30, default="pending")
-    created_at = models.DateTimeField(auto_now_add=True)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
