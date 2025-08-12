@@ -129,7 +129,7 @@ class Order(models.Model):
     reference = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=30, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
 class PartnerInvestment(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -140,7 +140,6 @@ class PartnerInvestment(models.Model):
         ('delivered', 'Delivered')
     )
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='investments')  
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="partnerinvestment")
     partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments")
     product = models.ManyToManyField(Product, related_name="investments")
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2)
