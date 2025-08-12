@@ -1860,3 +1860,39 @@ class AdminNotificationListView(APIView):
         notifications = Notification.objects.filter(event_type="admin").order_by('-created_at')
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
+
+
+class UpdateStatusView(APIView):
+    permission_classes = [IsAdmin]
+
+    def patch(self, request, *args, **kwargs):
+        model_type = request.data.get("model_type")  # 'order' or 'investment'
+        obj_id = request.data.get("id")
+        new_status = request.data.get("status")
+
+        if not model_type or not obj_id or not new_status:
+            return Response(
+                {"error": "model_type, id, and status are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if model_type == "order":
+            try:
+                obj = Order.objects.get(id=obj_id)
+            except Order.DoesNotExist:
+                return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        elif model_type == "investment":
+            try:
+                obj = PartnerInvestment.objects.get(id=obj_id)
+            except PartnerInvestment.DoesNotExist:
+                return Response({"error": "Investment not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"error": "Invalid model_type"}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj.status = new_status
+        obj.save()
+
+        return Response(
+            {"message": f"{model_type.capitalize()} status updated", "id": obj_id, "status": new_status},
+            status=status.HTTP_200_OK
+        )
