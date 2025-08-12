@@ -345,7 +345,7 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
         ]
 
 class PartnerAdminReportSerializer(serializers.Serializer):
-    partner_id = serializers.IntegerField(source="partner.id", read_only=True)
+    partner_id = serializers.IntegerField(source="id", read_only=True)
     name = serializers.SerializerMethodField()
     email = serializers.EmailField()
     # phone = serializers.CharField()

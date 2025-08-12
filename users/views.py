@@ -548,6 +548,7 @@ class WithdrawalSummaryAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         request_time = now()
+        user = request.user
 
         # Get all pending withdrawal transactions for partners
         pending_qs = Transaction.objects.filter(
@@ -562,10 +563,14 @@ class WithdrawalSummaryAPIView(APIView):
             partner = tx.user
             partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
             balance = getattr(partner.wallet, 'balance', 0)
+            if user.profile_picture:
+                profile_picture_url = user.profile_picture.url
+            else:
+                profile_picture_url = None
 
             withdrawals_data.append({
                 "partner_name": partner_name,
-                "profile_pic": partner.profile_picture,
+                "profile_pic": profile_picture_url,
                 "amount": tx.amount,
                 "balance": balance,
                 "from_user": tx.from_user,
@@ -1472,20 +1477,65 @@ class PartnerDetailWithInvestmentsView(APIView):
         try:
             partner = Users.objects.prefetch_related(
                 'investments__vendor',
-                'investments__product'
+                'investments__product',
+                'transactions'
             ).get(id=partner_id, user_type='partner')
         except Users.DoesNotExist:
             return Response({"error": "Partner not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get limit from query params, default 10
+        # Limit for orders
         limit = request.query_params.get('limit', 10)
         try:
             limit = int(limit)
         except ValueError:
             return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = PartnerDetailSerializer(partner, context={'investment_limit': limit})
-        return Response(serializer.data)
+        # Investments summary
+        investments = partner.investments.all()
+        total_orders = investments.count()
+        total_invested = investments.aggregate(total=Sum('amount_invested'))['total'] or 0
+
+        # Balance (assuming Users model has a balance field)
+        balance = getattr(partner, 'balance', 0)
+
+        # Orders list
+        orders_list = []
+        for inv in investments.order_by('-created_at')[:limit]:
+            orders_list.append({
+                "order_id": inv.order_id,
+                "date": inv.created_at,
+                "vendor": inv.vendor.name if inv.vendor else None,
+                "amount_invested": inv.amount_invested,
+                "products": [p.name for p in inv.product.all()]
+            })
+
+        # Transactions list
+        transactions_list = []
+        for tx in partner.transactions.all().order_by('-created_at'):
+            transactions_list.append({
+                "transaction_id": tx.id,
+                "type": tx.transaction_type,
+                "amount": tx.amount,
+                "status": tx.status,
+                "created_at": tx.created_at
+            })
+
+        return Response({
+            "partner": {
+                "id": partner.id,
+                "name": partner.get_full_name(),
+                "email": partner.email,
+                "phone": partner.phone if hasattr(partner, "phone") else None,
+                "balance": balance
+            },
+            "summary": {
+                "total_orders": total_orders,
+                "total_invested": total_invested,
+                "balance": balance
+            },
+            "orders": orders_list,
+            "transactions": transactions_list
+        }, status=status.HTTP_200_OK)
     
 class AdminDashboardView(APIView):
     permission_classes = [IsAdmin]
@@ -1583,10 +1633,15 @@ class AdminDashboardView(APIView):
             partner = tx.user
             partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
             balance = getattr(partner.wallet, 'balance', 0)
+            if user.profile_picture:
+                profile_picture_url = user.profile_picture.url
+            else:
+                profile_picture_url = None
+
 
             withdrawals_data.append({
                 "partner_name": partner_name,
-                "profile_pic": partner.profile_picture,
+                "profile_pic": profile_picture_url,
                 "amount": tx.amount,
                 "balance": balance,
                 "from_user": tx.from_user,
