@@ -1867,7 +1867,7 @@ class UpdateStatusView(APIView):
 
     def patch(self, request, *args, **kwargs):
         model_type = request.data.get("model_type")  # 'order' or 'investment'
-        obj_id = request.data.get("id")
+        obj_id = request.data.get("order_id")
         new_status = request.data.get("status")
 
         if not model_type or not obj_id or not new_status:
