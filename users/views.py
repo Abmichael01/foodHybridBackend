@@ -1818,6 +1818,13 @@ class AdminSingleROICycleBreakdownView(APIView):
         else:
             profile_picture_url = None
 
+        
+        if inv.vendor.profile_picture:
+            vendor_profile_picture_url = inv.partner.profile_picture.url
+        else:
+            vendor_profile_picture_url = None
+
+
 
         data = {
             "created_at": inv.created_at,
@@ -1826,7 +1833,7 @@ class AdminSingleROICycleBreakdownView(APIView):
             "partner_picture": profile_picture_url,
             "vendor_name": inv.vendor.name if inv.vendor else None,
             "vendor_address": inv.vendor.address if inv.vendor else None,
-            "vendor_picture": inv.vendor.profile_picture if inv.vendor else None,
+            "vendor_picture": vendor_profile_picture_url,
             "products": [p.name for p in inv.product.all()],
             "amount_invested": inv.amount_invested,
             "total_roi": inv.total_roi(),
