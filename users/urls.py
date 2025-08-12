@@ -42,5 +42,5 @@ urlpatterns = [
     # path('admin/partners/', PartnerListView.as_view(), name='partner-detail-with-investmen/ts'),
     path('admin/orders/<str:order_id>/', AdminSingleROICycleBreakdownView.as_view(), name='partner-detail-with-investments'),
     path('admin/notification/', AdminNotificationListView.as_view(), name='admin-notification'),
-    path('admin/updateStatus', UpdateStatusView.as_view(), name='update-status'),
+    path('admin/updateStatus/', UpdateStatusView.as_view(), name='update-status'),
 ]
