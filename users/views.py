@@ -1872,18 +1872,18 @@ class UpdateStatusView(APIView):
 
         if not model_type or not obj_id or not new_status:
             return Response(
-                {"error": "model_type, id, and status are required"},
+                {"error": "model_type, order_id, and status are required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if model_type == "order":
             try:
-                obj = Order.objects.get(id=obj_id)
+                obj = Order.objects.get(order_id=obj_id)
             except Order.DoesNotExist:
                 return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         elif model_type == "investment":
             try:
-                obj = PartnerInvestment.objects.get(id=obj_id)
+                obj = PartnerInvestment.objects.get(order_id=obj_id)
             except PartnerInvestment.DoesNotExist:
                 return Response({"error": "Investment not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
