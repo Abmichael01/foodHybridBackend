@@ -17,7 +17,7 @@ urlpatterns = [
     path('deliery/confirm/', ConfirmDeliveryOTPView.as_view(), name="confirm delivery"),
     path('profile/update/partner/', UpdateProfileView.as_view(), name='update-profile'),
     path('retrieve-pin/partner/', RetrieveWithdrawalPinView.as_view(), name='retrieve-withdrawal-pin'),
-    path('admin/recent-orders/', AdminRecentOrdersView.as_view(), name='orders'),
+    path('admin/orders/', AdminRecentOrdersView.as_view(), name='orders'),
     # path('request-reset-pin/partner/', RequestPinResetView.as_view(), name='request-reset-pin'),
     # path('reset-pin/partner/', ResetPinWithOTPView.as_view(), name='reset-pin-with-otp'),
     # path('investments/partner/', PartnerInvestmentsView.as_view(), name='partner-investment'),
@@ -40,6 +40,6 @@ urlpatterns = [
     path('admin/vendors/<str:vendor_id>/', VendorDetailWithOrdersView.as_view(), name='vendor-detail-with-orders'),
     path('admin/partners/<int:partner_id>/', PartnerDetailWithInvestmentsView.as_view(), name='partner-list'),
     # path('admin/partners/', PartnerListView.as_view(), name='partner-detail-with-investmen/ts'),
-    path('admin/orders/', AdminROICycleBreakdownView.as_view(), name='partner-detail-with-investments'),
+    path('admin/orders/<int:order_id>', AdminROICycleBreakdownView.as_view(), name='partner-detail-with-investments'),
 
 ]

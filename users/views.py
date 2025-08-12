@@ -1496,7 +1496,7 @@ class PartnerDetailWithInvestmentsView(APIView):
         total_invested = investments.aggregate(total=Sum('amount_invested'))['total'] or 0
 
         # Balance (assuming Users model has a balance field)
-        balance = getattr(partner, 'balance', 0)
+        balance = getattr(partner.wallet, 'balance', 0)
 
         # Orders list
         orders_list = []
@@ -1519,6 +1519,13 @@ class PartnerDetailWithInvestmentsView(APIView):
                 "status": tx.status,
                 "created_at": tx.created_at
             })
+            
+        if partner.profile_picture:
+            profile_picture_url = partner.profile_picture.url
+        else:
+            profile_picture_url = None
+
+
 
         return Response({
             "partner": {
@@ -1526,7 +1533,9 @@ class PartnerDetailWithInvestmentsView(APIView):
                 "name": partner.get_full_name(),
                 "email": partner.email,
                 "phone": partner.phone if hasattr(partner, "phone") else None,
-                "balance": balance
+                "address": partner.address,
+                "balance": balance,
+                "profile_picture":profile_picture_url
             },
             "summary": {
                 "total_orders": total_orders,

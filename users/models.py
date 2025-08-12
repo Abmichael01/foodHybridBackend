@@ -45,6 +45,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
       username = models.CharField(max_length=150,blank=True,null=False)
       first_name = models.CharField(max_length=150, blank=True)
       last_name = models.CharField(max_length=150, blank=True)
+      address = models.CharField(max_length=128, default="")
       password = models.CharField(max_length=128)
       profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
       user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="")  
