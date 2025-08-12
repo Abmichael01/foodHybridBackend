@@ -1335,16 +1335,11 @@ class AdminComprehensiveReportView(APIView):
             'total_partners': total_partners,
             "partners": partner_data,
             'total_investment': total_investment, 
-            'withdrawals_report': {
-                'pending': {
-                    'count': total_pending_count,
-                    'total_amount': total_pending_amount
-                }
+            'pending_withdrawals': total_pending_count,
                 # 'approved': {
                 #     'count': total_approved_count,
                 #     'total_amount': total_approved_amount
                 # }
-            }
         })
     
 class AdminVendorDashboardView(APIView):
@@ -1501,9 +1496,11 @@ class PartnerDetailWithInvestmentsView(APIView):
         for inv in investments.order_by('-created_at')[:limit]:
             orders_list.append({
                 "order_id": inv.order_id,
-                "date": inv.created_at,
-                "vendor": inv.vendor.name if inv.vendor else None,
-                "amount_invested": inv.amount_invested,
+                "created_at": inv.created_at,
+                "vendor_name": inv.vendor.name if inv.vendor else None,
+                "partner_name":partner.get_full_name(),
+                "amount": inv.amount_invested,
+                "status": inv.status,
                 "products": [p.name for p in inv.product.all()]
             })
 
@@ -1694,7 +1691,7 @@ class AdminDashboardView(APIView):
                     "approved_withdrawals_count": approved_count,
                 })
 
-        withdrawals_data = []
+        # withdrawals_data = []
         for tx in pending_qs:
             partner = tx.user
             partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
@@ -1705,7 +1702,7 @@ class AdminDashboardView(APIView):
                 profile_picture_url = None
 
 
-            withdrawals_data.append({
+            user_summaries.append({
                 "partner_name": partner_name,
                 "profile_pic": profile_picture_url,
                 "amount": tx.amount,
@@ -1730,8 +1727,7 @@ class AdminDashboardView(APIView):
             "todays_remittance": total_approved_amount,
             "total_balance": total_balance,
             "recent_orders": recent_orders,
-            "withdrawal_request": user_summaries,
-            "withdrawals": withdrawals_data
+            "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
 
 class AdminROICycleBreakdownView(APIView):
