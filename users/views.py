@@ -1246,7 +1246,7 @@ class AllTransactionsView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 class NotificationListView(APIView):
-    permission_classes = [IsPartner, IsAdmin]
+    permission_classes = [IsPartner]
 
     def get(self, request):
         notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
