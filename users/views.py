@@ -576,7 +576,8 @@ class WithdrawalSummaryAPIView(APIView):
                 "from_user": tx.from_user,
                 "to": tx.to,  # Or dynamically from transaction if available
                 "requested_at": tx.created_at,
-                "status": tx.status
+                "status": tx.status,
+                "withdraw_id": tx.reference
             })
 
         return Response(withdrawals_data, status=status.HTTP_200_OK)
