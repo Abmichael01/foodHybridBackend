@@ -118,9 +118,10 @@ class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product_images/')
 
-
+    
 def get_default_vendor_pk():
-    return Vendor.objects.first().pk
+    vendor = Vendor.objects.first()
+    return vendor.pk if vendor else None
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
