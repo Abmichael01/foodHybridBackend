@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from users.permisssion import IsAdmin, IsAdminOrPartner, IsPartner
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Shop, Product, PartnerInvestment
+from .models import ProductImage, Shop, Product, PartnerInvestment
 from .serializers import ShopSerializer, ProductSerializer
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from django.shortcuts import get_object_or_404
@@ -24,22 +24,44 @@ class AdminAddShopView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class AdminAddProductView(APIView):
+#     permission_classes = [IsAdmin]
+#     parser_classes = [MultiPartParser, FormParser, JSONParser] 
+
+#     def post(self, request):
+#         quantity = request.data.get('stock_quantity')
+
+#         serializer = ProductSerializer(data=request.data)
+#         if serializer.is_valid():
+#             product = serializer.save() 
+#             return Response({
+#                 'detail': 'Product created successfully.',
+#                 'product': ProductSerializer(product).data 
+#             }, status=status.HTTP_201_CREATED)
+
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class AdminAddProductView(APIView):
     permission_classes = [IsAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser] 
 
     def post(self, request):
-        quantity = request.data.get('stock_quantity')
-
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            product = serializer.save() 
+            product = serializer.save()  # Create the product first
+
+            # Handle uploaded images
+            images = request.FILES.getlist('images')  # multiple files
+            for img in images:
+                ProductImage.objects.create(product=product, image=img)
+
             return Response({
                 'detail': 'Product created successfully.',
-                'product': ProductSerializer(product).data 
+                'product': ProductSerializer(product).data
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AdminUpdateProductView(APIView):
     permission_classes = [IsAdmin]
