@@ -1711,7 +1711,8 @@ class AdminDashboardView(APIView):
                 "balance": balance,
                 "from_user": tx.from_user,
                 "to": tx.to,  # Or dynamically from transaction if available
-                "requested_at": tx.created_at
+                "requested_at": tx.created_at,
+                "withdraw_id": tx.reference
             })
 
             # return Response({
