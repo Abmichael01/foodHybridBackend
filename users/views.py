@@ -1361,8 +1361,8 @@ class AdminVendorDashboardView(APIView):
 
         return Response({
             'total_vendors': total_vendors,
-            'total_remittance': total_remittance,
-            'today_remittance': today_remittance,
+            'total_remittance': 0,
+            'today_remittance': 0,
             'vendors': serialized_vendors
         })
     
