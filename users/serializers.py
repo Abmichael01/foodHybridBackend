@@ -452,7 +452,7 @@ class VendorOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'order_id', 'partner_name', 'total_amount', 'created_at', 'items']
+        fields = ['id', 'partner_name', 'total_amount', 'created_at', 'items']
 
     def get_total_amount(self, obj):
         return sum(item.price * item.quantity for item in obj.items.all())
