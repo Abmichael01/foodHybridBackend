@@ -1740,8 +1740,10 @@ class AdminDashboardView(APIView):
             })
 
         # Total accumulative balance for all unique partners
-        total_accumulative_balance = sum(partner_balances.values())
-
+        # total_accumulative_balance = sum(partner_balances.values())
+        total_accumulative_balance = Users.objects.aggregate(
+    total_balance=Sum('wallet__balance')
+)['total_balance'] or 0
 
             # return Response({
             # "global_summary": {
