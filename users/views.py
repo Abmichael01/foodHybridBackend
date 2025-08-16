@@ -1694,15 +1694,39 @@ class AdminDashboardView(APIView):
             #     })
 
         # withdrawals_data = []
+        # for tx in pending_qs:
+        #     partner = tx.user
+        #     partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
+        #     balance = getattr(partner.wallet, 'balance', 0)
+        #     if user.profile_picture:
+        #         profile_picture_url = user.profile_picture.url
+        #     else:
+        #         profile_picture_url = None
+
+
+        #     user_summaries.append({
+        #         "partner_name": partner_name,
+        #         "profile_pic": profile_picture_url,
+        #         "amount": tx.amount,
+        #         "balance": balance,
+        #         "from_user": tx.from_user,
+        #         "to": tx.to,  # Or dynamically from transaction if available
+        #         "requested_at": tx.created_at,
+        #         "withdraw_id": tx.reference
+        #     })
+        user_summaries = []
+        partner_balances = {}  # To avoid counting a partner's balance multiple times
+
         for tx in pending_qs:
             partner = tx.user
             partner_name = partner.get_full_name() if hasattr(partner, 'get_full_name') else f"{partner.first_name} {partner.last_name}"
             balance = getattr(partner.wallet, 'balance', 0)
-            if user.profile_picture:
-                profile_picture_url = user.profile_picture.url
-            else:
-                profile_picture_url = None
 
+            # Use tx.user.id (or pk) to avoid duplicate balances for same partner
+            if partner.id not in partner_balances:
+                partner_balances[partner.id] = balance
+
+            profile_picture_url = partner.profile_picture.url if getattr(partner, 'profile_picture', None) else None
 
             user_summaries.append({
                 "partner_name": partner_name,
@@ -1710,10 +1734,14 @@ class AdminDashboardView(APIView):
                 "amount": tx.amount,
                 "balance": balance,
                 "from_user": tx.from_user,
-                "to": tx.to,  # Or dynamically from transaction if available
+                "to": tx.to,
                 "requested_at": tx.created_at,
                 "withdraw_id": tx.reference
             })
+
+        # Total accumulative balance for all unique partners
+        total_accumulative_balance = sum(partner_balances.values())
+
 
             # return Response({
             # "global_summary": {
@@ -1727,8 +1755,8 @@ class AdminDashboardView(APIView):
 
         return Response({
             "pending_withdrawals": total_pending_count,
-            "todays_remittance": total_approved_amount,
-            "total_balance": total_balance,
+            "todays_remittance": 0,
+            "total_balance": total_accumulative_balance,
             "recent_orders": recent_orders,
             "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
