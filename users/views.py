@@ -16,6 +16,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Sum, Q
 from .utils import generate_otp, get_tokens_for_user,set_user_pin,retrieve_user_pin
 from .permisssion import IsPartner, IsAdmin
+from rest_framework.permissions import AllowAny
 from django.utils.timezone import now
 from django.db.models.functions import TruncDate
 from decimal import Decimal
@@ -31,14 +32,15 @@ from django.db import models
 
 # Partners SignUp   
 class SignupView(APIView):
-    @swagger_auto_schema(request_body=PartnerSignUpSerializer, responses={201: openapi.Response(
-            description="OTP sent to your email!",
-            schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING),
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER),
-            })
-        )}
-    )
+    # @swagger_auto_schema(request_body=PartnerSignUpSerializer, responses={201: openapi.Response(
+    #         description="OTP sent to your email!",
+    #         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+    #             'message': openapi.Schema(type=openapi.TYPE_STRING),
+    #             'status': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #         })
+    #     )}
+    # )
+    permission_classes = [AllowAny]
     def post(self, request):
         resend = request.data.get('resend', False)
         serializer = PartnerSignUpSerializer(data=request.data)
@@ -1853,7 +1855,7 @@ class AdminSingleROICycleBreakdownView(APIView):
 
         
         if inv.vendor.profile_picture:
-            vendor_profile_picture_url = inv.partner.profile_picture.url
+            vendor_profile_picture_url = inv.vendor.profile_picture.url
         else:
             vendor_profile_picture_url = None
 
