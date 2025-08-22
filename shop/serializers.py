@@ -28,9 +28,11 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
+    bags = serializers.SerializerMethodField()
+    total_weight = serializers.SerializerMethodField()
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
-        write_only=True,
+        # write_only=True,
         required=False
     )
 
@@ -40,7 +42,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'product_id', 'name', 'description',
             'price', 'stock_quantity', 'roi_percentage',
             'quantity_per_unit', 'kg_per_unit',
-            'images', 'uploaded_images'  # return & receive
+            'images', 'uploaded_images', 'bags'  
         ]
 
     def create(self, validated_data):
@@ -63,5 +65,9 @@ class ProductSerializer(serializers.ModelSerializer):
                 ProductImage.objects.create(product=instance, image=img)
 
         return instance
+    
+
+    def get_bags(self, obj):
+        return (obj.quantity_per_unit or 0) * (obj.stock_quantity or 0)
 
 

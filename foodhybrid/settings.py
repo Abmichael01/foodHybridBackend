@@ -257,3 +257,10 @@ EMAIL_USE_TLS = True     # for SSL communication use EMAIL_USE_SSL
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY") # sk_live_... or sk_test_...
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+STRIPE_CONNECT_APP_FEE_BPS = 250 # 2.5% platform fee example
+STRIPE_SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL", "https://example.com/success")
+STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", "https://example.com/cancel")
+SITE_CURRENCY = "usd" # match your Stripe account currency

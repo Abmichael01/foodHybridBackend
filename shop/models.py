@@ -87,10 +87,11 @@ class Product(models.Model):
     product_id = models.CharField(max_length=20, unique=True, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
+    # bags = models.PositiveIntegerField(default=0, editable=False) 
     price = models.DecimalField(max_digits=12, decimal_places=2)  # investment amount
     stock_quantity = models.PositiveIntegerField(default=0)
     quantity_per_unit = models.PositiveIntegerField(default=0, null=True, blank=True)
-    kg_per_unit = models.PositiveIntegerField(default=0, null=True, blank=True)
+    kg_per_unit = models.DecimalField(default=0, null=True, blank=True, decimal_places=2, max_digits=10)
     roi_percentage = models.DecimalField(max_digits=5, decimal_places=2)  # e.g., 10.5 for 10.5%
     duration_days = models.PositiveIntegerField(null=True, blank=True, default=105)  # Investment duration in days
     created_at = models.DateTimeField(auto_now_add=True)
@@ -105,6 +106,9 @@ class Product(models.Model):
                  break
          else:
              raise ValueError("Could not generate a unique shop_id after 10 attempts.")
+        
+        # Auto-calculate bags before saving
+    #  self.bags = (self.quantity_per_unit or 0) * (self.stock_quantity or 0)
      super().save(*args, **kwargs)
 
 
@@ -113,6 +117,16 @@ class Product(models.Model):
 
     def calculate_roi_amount(self):
         return (self.price * self.roi_percentage) / 100
+
+    # @property
+    # def total_bags(self):
+    #     """Calculate total bags = quantity_per_unit * stock_quantity"""
+    #     return (self.quantity_per_unit or 0) * (self.stock_quantity or 0)
+
+    # @property
+    # def total_weight(self):
+    #     """Optional: Calculate total weight in kg = total_bags * kg_per_unit"""
+    #     return self.total_bags * (self.kg_per_unit or 0)
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
