@@ -28,7 +28,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
-    bags = serializers.SerializerMethodField()
+    bags = serializers.SerializerMethodField(read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
         # write_only=True,
