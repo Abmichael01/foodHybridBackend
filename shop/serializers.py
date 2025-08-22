@@ -29,7 +29,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     bags = serializers.SerializerMethodField()
-    total_weight = serializers.SerializerMethodField()
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
         # write_only=True,
