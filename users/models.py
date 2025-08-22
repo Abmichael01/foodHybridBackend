@@ -151,7 +151,8 @@ class Notification(models.Model):
         ('investment', 'Investment'),
         ('roi', 'Return On Investment'),
         ('system', 'System Notification'),
-        ('admin', 'System Admin Notification')
+        ('admin', 'System Admin Notification'),
+        ('order', 'order delivered'),
     )
 
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='notifications')

@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from users.permisssion import IsPartner
-from users.models import Notification
+from users.models import Notification, Users
 from .models import Cart, CartItem
 from shop.models import Product, Order, OrderItem, PartnerInvestment, Vendor
 from wallet.utils import generate_reference
@@ -204,6 +204,16 @@ class CheckoutView(APIView):
             event_type="investment",
             available_balance_at_time=wallet.balance
         )
+        admins = Users.objects.filter(is_superuser=True)  # Or use is_staff/group filter
+        for admin in admins:
+            Notification.objects.create(
+                user=admin,
+                title="New Pending Investment",
+                message=f"Partner {user.username} just made an investment of {total} with reference {order.reference}. Pending your approval.",
+                event_type="admin",
+                from_user=user.username,
+                to_user=admin.username
+            )
         Transaction.objects.create(
             user=user,
             from_user="Available Balance",
@@ -211,10 +221,10 @@ class CheckoutView(APIView):
             to="investment",
             transaction_type="investment",
             amount=total,
-            status="completed",
+            status="pending",
             reference=generate_reference(),
             order_id=order.reference,
-            description="You made an investment",
+            description="Your investment is pending approval",
             available_balance_at_time=wallet.balance
         )
 

@@ -55,17 +55,70 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['product_name', 'quantity', 'price']
         
+# class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OrderDeliveryConfirmation
+#         fields = [
+#             'investment',
+#             'owner_name',
+#             'owner_email',
+#             'store_name',
+#             'store_email',
+#             'store_phone',
+#             'store_address'
+#         ]
+
 class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
+    order_id = serializers.CharField(write_only=True)
+
     class Meta:
         model = OrderDeliveryConfirmation
         fields = [
-            'investment',
+            'order_id',
             'owner_name',
             'owner_email',
             'store_name',
             'store_email',
             'store_phone',
-            'store_address'
+            'store_address',
+        ]
+
+    def create(self, validated_data):
+        order_id = validated_data.pop('order_id')
+        try:
+            investment = PartnerInvestment.objects.get(order_id=order_id)
+        except PartnerInvestment.DoesNotExist:
+            raise serializers.ValidationError({"order_id": "Invalid order ID"})
+
+        # One-to-one means only one confirmation per investment
+        if hasattr(investment, "delivery_confirmation"):
+            raise serializers.ValidationError({"order_id": "Delivery confirmation already exists for this order"})
+
+        return OrderDeliveryConfirmation.objects.create(
+            investment=investment,
+            **validated_data
+        )
+
+class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
+    investment_order_id = serializers.CharField(source="investment.order_id", read_only=True)
+    investment_status = serializers.CharField(source="investment.status", read_only=True)
+
+    class Meta:
+        model = OrderDeliveryConfirmation
+        fields = [
+            "id",
+            "investment_order_id",
+            "investment_status",
+            "owner_name",
+            "owner_email",
+            "store_name",
+            "store_email",
+            "store_phone",
+            "store_address",
+            "is_confirmed",
+            "confirmed_at",
+            "otp_sent_at",
+            "created_at",
         ]
 
 class VendorSerializer(serializers.ModelSerializer):

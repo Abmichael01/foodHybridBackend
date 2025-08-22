@@ -203,8 +203,18 @@ class ConfirmDeliveryView(APIView):
                 # user=tx.user
                 title="Order Delivered",
                 message=f"Order {investment_id} successfully delivered to the vendor.",
-                event_type="withdraw",
+                event_type="order",
             )
+            admins = Users.objects.filter(is_superuser=True)  # Or use is_staff/group filter
+            for admin in admins:
+                Notification.objects.create(
+                    user=admin,
+                    title="Order Delivered",
+                    message=f"Order {investment_id} successfully delivered to the vendor.",
+                    event_type="admin",
+                    from_user=request.user.username if request.user else "system",
+                    to_user=admin.username
+                )
             return Response({"detail": "Delivery confirmed successfully"}, status=200)
         return Response({"detail": "Invalid OTP"}, status=400)
     
@@ -1931,3 +1941,23 @@ class UpdateStatusView(APIView):
             {"message": f"{model_type.capitalize()} status updated", "id": obj_id, "status": new_status},
             status=status.HTTP_200_OK
         )
+
+class AdminOrderDeliveryListView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        confirmations = OrderDeliveryConfirmation.objects.all().order_by("-created_at")
+        serializer = OrderDeliveryConfirmationSerializer(confirmations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class AdminOrderDeliveryDetailView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, order_id):
+        try:
+            confirmation = OrderDeliveryConfirmation.objects.get(investment__order_id=order_id)
+        except OrderDeliveryConfirmation.DoesNotExist:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OrderDeliveryConfirmationSerializer(confirmation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
