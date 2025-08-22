@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,6 +15,7 @@ from users.utils import verify_user_pin
 from users.permisssion import IsPartner, IsAdmin, IsAdminOrPartner
 from foodhybrid.utils import send_email
 from django.utils.timezone import now
+import stripe
 
 
 # class PartnerInvestmentView(APIView):
@@ -155,7 +157,7 @@ from django.utils.timezone import now
 #             })
 
 #         return Response({'investments': data})
-    
+stripe.api = settings.STRIPE_SECRET_KEY
 class PartnerInvestmentDeleteView(APIView):
     permission_classes = [IsAdminOrPartner]
        # cancel investment for current user
@@ -252,20 +254,29 @@ class FundWalletView(APIView):
         # Retrieve or create the user's wallet
         wallet, created = Wallet.objects.get_or_create(user=user)
 
+        stripe_amount = int(amount * 100)
+
+        intent = stripe.PaymentIntent.create(
+            amount=stripe_amount,
+            currency="usd",
+            automatic_payment_methods={"enabled": True},
+            metadata={"user_id": user.id, "amount": str(amount)},
+        )
+
         # Fund the wallet (increase balance)
-        print({"type":type(amount)})
-        print({"type":type(wallet.balance)})
-        wallet.balance += amount
-        wallet.save()
-        Notification.objects.create(
-            user=user,
-            title="Account Funded!",
-            message=f"You just funded your account with {amount}",
-            event_type="fund",
-            from_user = payment_method,
-            to_user="wallet",
-            available_balance_at_time=wallet.balance
-        )    
+        # print({"type":type(amount)})
+        # print({"type":type(wallet.balance)})
+        # wallet.balance += amount
+        # wallet.save()
+        # Notification.objects.create(
+        #     user=user,
+        #     title="Account Funding!",
+        #     message=f"You just funded your account with {amount}",
+        #     event_type="fund",
+        #     from_user = payment_method,
+        #     to_user="wallet",
+        #     available_balance_at_time=wallet.balance
+        # )    
         ref = generate_reference()
         Transaction.objects.create(
             user=user,
@@ -273,14 +284,14 @@ class FundWalletView(APIView):
             payment_method= payment_method,
             transaction_type="fund",
             amount=amount,
-            # status="pending",  # may require admin approval
+            status="pending",  # may require admin approval
             reference= ref,
             description="Withdrawal request by partner",
             available_balance_at_time=wallet.balance
         )
-        send_email(user,"wallet_funded", "Wallet Funded Successfully", extra_context={"amount":amount,"payment_method":payment_method,"reference": ref, "date": now()})
+        # send_email(user,"wallet_funded", "Wallet funding Successfully", extra_context={"amount":amount,"payment_method":payment_method,"reference": ref, "date": now()})
 
-        return Response({'detail': f'Wallet funded successfully. New balance: {wallet.balance}'})
+        return Response({'detail': f'Wallet funding initiated. We are confirming your payment.', 'client_secret': intent.client_secret, "reference":ref})
 
 
 class WithdrawWalletView(APIView):

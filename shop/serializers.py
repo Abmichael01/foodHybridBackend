@@ -44,26 +44,47 @@ class ProductSerializer(serializers.ModelSerializer):
             'images', 'uploaded_images', 'bags'  
         ]
 
+    # def create(self, validated_data):
+    #     uploaded_images = validated_data.pop('uploaded_images', [])
+    #     product = Product.objects.create(**validated_data)
+    #     for img in uploaded_images:
+    #         ProductImage.objects.create(product=product, image=img)
+    #     return product
+
+    # def update(self, instance, validated_data):
+    #     uploaded_images = validated_data.pop('uploaded_images', [])
+    #     for attr, value in validated_data.items():
+    #         setattr(instance, attr, value)
+    #     instance.save()
+
+    #     if uploaded_images:
+    #         # Optional: clear previous images
+    #         instance.images.all().delete()
+    #         for img in uploaded_images:
+    #             ProductImage.objects.create(product=instance, image=img)
+
+    #     return instance
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
-        product = Product.objects.create(**validated_data)
+        product = super().create(validated_data)
+
         for img in uploaded_images:
             ProductImage.objects.create(product=product, image=img)
+
         return product
 
     def update(self, instance, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        product = super().update(instance, validated_data)
 
         if uploaded_images:
-            # Optional: clear previous images
-            instance.images.all().delete()
+            # If you want to REPLACE images on update
+            product.images.all().delete()
             for img in uploaded_images:
-                ProductImage.objects.create(product=instance, image=img)
+                ProductImage.objects.create(product=product, image=img)
 
-        return instance
+        return product
+
     
 
     def get_bags(self, obj):

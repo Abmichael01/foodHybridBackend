@@ -17,6 +17,9 @@ from cryptography.fernet import Fernet
 from decouple import config
 import dj_database_url
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +33,7 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-vo0srq^w78m93a+=1cwf_h0q5(p+tjzmb9+zj6rw_miz)wjm0q'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["foo-dhybrid-backend.onrender.com", "127.0.0.1", "foodhybridbackend-production.up.railway.app", "foodhybrid.com/api"]
 
@@ -45,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
@@ -62,6 +67,8 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+
+    'storages',
 
     'channels',
 
@@ -192,7 +199,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "static"
 STATICFILES_STORAGE = "whitenoise.storage.CompressManifestStaticFilesStorage"
 
@@ -258,9 +265,22 @@ EMAIL_USE_TLS = True     # for SSL communication use EMAIL_USE_SSL
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STRIPE_API_KEY = os.getenv("STRIPE_API_KEY") # sk_live_... or sk_test_...
+
+
+# STRIPE_API_KEY = os.getenv("STRIPE_API_KEY") # sk_live_... or sk_test_...
+# STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+# STRIPE_CONNECT_APP_FEE_BPS = 250 # 2.5% platform fee example
+# STRIPE_SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL", "https://example.com/success")
+# STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", "https://example.com/cancel")
+# SITE_CURRENCY = "usd" # match your Stripe account currency
+
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
-STRIPE_CONNECT_APP_FEE_BPS = 250 # 2.5% platform fee example
-STRIPE_SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL", "https://example.com/success")
-STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", "https://example.com/cancel")
-SITE_CURRENCY = "usd" # match your Stripe account currency
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv("CLOUDINARY_CLOUD_NAME"),
+    'API_KEY': os.getenv("CLOUDINARY_API_KEY"),
+    'API_SECRET': os.getenv("CLOUDINARY_API_SECRET"),
+}
