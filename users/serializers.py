@@ -183,7 +183,9 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         # Update password
         if password:
             user.set_password(password)
-            user.save()
+
+        user.user_type = "vendor"
+        user.save()
 
         # Update vendor details (linked by user)
         vendor, created = Vendor.objects.update_or_create(
