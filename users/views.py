@@ -1697,7 +1697,9 @@ class PartnerDetailWithInvestmentsView(APIView):
 #             "orders": orders_list,
 #             "transactions": transactions_list
 #         }, status=status.HTTP_200_OK)
-    
+#     psycopg.errors.UndefinedColumn: column shop_vendor.user_id does not exist
+
+# LINE 1: ...tnerinvestment"."updated_at", "shop_vendor"."id", "shop_vend...
 class AdminDashboardView(APIView):
     permission_classes = [IsAdmin]
 

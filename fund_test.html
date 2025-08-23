@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fund Wallet</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    #card-element { padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; }
+    #payment-result { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Fund Wallet</h2>
+  <form id="payment-form">
+    <label>Amount (USD cents):</label><br>
+    <input type="number" id="amount" value="1000"><br><br>
+
+    <div id="card-element"></div>
+    <button type="submit">Fund Wallet</button>
+  </form>
+
+  <div id="payment-result"></div>
+
+  <script>
+    const stripe = Stripe("pk_live_51Ry3NME4ARf3yVzm44OfYaGqslxUJpjQvp6RIV68GS58iVlGf7vKeixlzPWWwUM02wCZ2EeRv3YDOfoAvLBzA4Ly00L7megzrK"); // Replace with your publishable key
+    const elements = stripe.elements();
+    const card = elements.create("card");
+    card.mount("#card-element");
+
+    const form = document.getElementById("payment-form");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const amount = document.getElementById("amount").value;
+
+      // 1️⃣ Call backend to create PaymentIntent
+      const response = await fetch("backend.foodhybrid.com/api/wallet/fund/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ amount })
+      });
+
+      const data = await response.json();
+      const clientSecret = data.client_secret;
+
+      // 2️⃣ Confirm payment
+      const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card }
+      });
+
+      const resultDiv = document.getElementById("payment-result");
+
+      if (error) {
+        resultDiv.textContent = "Payment failed: " + error.message;
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        resultDiv.textContent = "Payment successful! Wallet funded.";
+      }
+    });
+  </script>
+</body>
+</html>
