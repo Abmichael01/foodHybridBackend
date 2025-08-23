@@ -160,7 +160,7 @@ from django.views.decorators.csrf import csrf_exempt
 #             })
 
 #         return Response({'investments': data})
-stripe.api = settings.STRIPE_SECRET_KEY
+stripe.api_key = settings.STRIPE_SECRET_KEY
 class PartnerInvestmentDeleteView(APIView):
     permission_classes = [IsAdminOrPartner]
        # cancel investment for current user
