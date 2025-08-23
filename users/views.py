@@ -79,6 +79,23 @@ def api_root(request):
     
 class SignupView(APIView):
     permission_classes = [AllowAny]
+    @swagger_auto_schema(  
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'user_type': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+            required=['email', 'user_type']
+        ),
+        responses={201: openapi.Response(
+            description="Email verified successfully. Go ahead and complete your signup process!",
+            schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                'status': openapi.Schema(type=openapi.TYPE_INTEGER),
+            })
+        )}
+    )
 
     def post(self, request):
         resend = request.data.get('resend', False)
