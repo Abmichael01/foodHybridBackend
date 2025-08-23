@@ -38,12 +38,13 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('api/', user_views.api_root, name='api-root'),
-    path('admin/', admin.site.urls),
-    path('users/', include("users.urls")),
-    path('wallet/', include('wallet.urls')),
-    path('shops/', include('shop.urls')),
-    path('cart/', include('cart.urls')),
+    path('admin/', admin.site.urls),  
+    path('api/', include([
+        path('', include('users.urls')),
+        path('wallet/', include('wallet.urls')),
+        path('shops/', include('shop.urls')),
+        path('cart/', include('cart.urls')),
+    ])),
     # path('auth/', include("dj_rest_auth.urls")),
     # path("auth/registration/", include("dj_rest_auth.registration.urls")),
    path('swagger.json/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
