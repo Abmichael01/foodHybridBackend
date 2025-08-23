@@ -170,6 +170,24 @@ class VendorSignupSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This store phone number is already registered.")
         return value
 
+    def create(self, validated_data):
+        email = validated_data.pop("email")
+        username = validated_data.pop("username")
+        password = validated_data.pop("password")
+
+        # Create base user
+        user = Users.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            user_type='vendor',
+        )
+
+        # Create vendor profile
+        vendor = Vendor.objects.create(user=user, **validated_data)
+        return vendor
+
+
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
