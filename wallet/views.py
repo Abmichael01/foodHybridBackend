@@ -1,5 +1,6 @@
 from time import timezone
 from django.conf import settings
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,6 +18,7 @@ from users.permisssion import IsPartner, IsAdmin, IsAdminOrPartner, IsVendor
 from foodhybrid.utils import send_email
 from django.utils.timezone import now
 import stripe
+from django.views.decorators.csrf import csrf_exempt
 
 
 # class PartnerInvestmentView(APIView):
@@ -507,3 +509,82 @@ class AdminConfirmRemittanceView(APIView):
                 "confirmed_at": remit.confirmed_at
             }
         })
+
+
+
+# --------STRIPE WEBHOOK.PY--------
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    # ----- FUND WALLET -----
+    if event["type"] == "payment_intent.succeeded":
+        intent = event["data"]["object"]
+        user_id = intent["metadata"].get("user_id")
+        amount = Decimal(intent["metadata"].get("amount"))
+
+        tx = Transaction.objects.filter(
+            user_id=user_id,
+            amount=amount,
+            status="pending",
+            payment_method="stripe",
+            transaction_type="fund"
+        ).last()
+
+        if tx:
+            wallet, _ = Wallet.objects.get_or_create(user_id=user_id)
+            wallet.balance += amount
+            wallet.save()
+
+            tx.status = "success"
+            tx.available_balance_at_time = wallet.balance
+            tx.save()
+
+    elif event["type"] == "payment_intent.payment_failed":
+        intent = event["data"]["object"]
+        user_id = intent["metadata"].get("user_id")
+        amount = Decimal(intent["metadata"].get("amount"))
+
+        tx = Transaction.objects.filter(
+            user_id=user_id,
+            amount=amount,
+            status="pending",
+            payment_method="stripe",
+            transaction_type="fund"
+        ).last()
+
+        if tx:
+            tx.status = "failed"
+            tx.save()
+
+    # ----- WITHDRAWAL -----
+    # If using Stripe Payouts (Custom/Express Connect)
+    elif event["type"] == "payout.paid":
+        payout = event["data"]["object"]
+        reference = payout.get("metadata", {}).get("reference")
+        tx = Transaction.objects.filter(reference=reference, transaction_type="withdraw").last()
+
+        if tx:
+            tx.status = "success"
+            tx.save()
+            # Optionally notify user that withdrawal succeeded
+
+    elif event["type"] == "payout.failed":
+        payout = event["data"]["object"]
+        reference = payout.get("metadata", {}).get("reference")
+        tx = Transaction.objects.filter(reference=reference, transaction_type="withdraw").last()
+
+        if tx:
+            tx.status = "failed"
+            tx.save()
+            # Optionally notify user that withdrawal failed
+
+    return JsonResponse({"status": "ok"})
+# --------STRIPE WEBHOOK.PY--------

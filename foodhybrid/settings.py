@@ -30,7 +30,7 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-vo0srq^w78m93a+=1cwf_h0q5(p+tjzmb9+zj6rw_miz)wjm0q'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["foo-dhybrid-backend.onrender.com", "127.0.0.1", "foodhybridbackend-production.up.railway.app", "backend.foodhybrid.com"]
 
