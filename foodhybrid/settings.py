@@ -107,8 +107,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'foodhybrid.urls'
 SITE_ID = 1
-# ROOT_HOSTCONF = 'foodhybrid.hosts'
-# DEFAULT_HOST = 'www'
+ROOT_HOSTCONF = 'foodhybrid.hosts'
+DEFAULT_HOST = 'www'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
