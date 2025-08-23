@@ -1,7 +1,0 @@
-# foodhybrid/hosts.py
-from django_hosts import patterns, host
-
-host_patterns = patterns('',
-    host(r'www', 'foodhybrid.urls', name='www'),
-    host(r'backend', 'foodhybrid.urls', name='backend'),  # or api_urls
-)
