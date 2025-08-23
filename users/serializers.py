@@ -140,7 +140,7 @@ class VendorSerializer(serializers.ModelSerializer):
 class VendorSignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=8)
-    profile_picture = serializers.ImageField(write_only=True, required=False)
+    # profile_picture = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = Vendor

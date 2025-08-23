@@ -31,7 +31,7 @@ class ProductSerializer(serializers.ModelSerializer):
     bags = serializers.SerializerMethodField(read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
-        # write_only=True,
+        write_only=True,
         required=False
     )
 
@@ -43,27 +43,6 @@ class ProductSerializer(serializers.ModelSerializer):
             'quantity_per_unit', 'kg_per_unit',
             'images', 'uploaded_images', 'bags'  
         ]
-
-    # def create(self, validated_data):
-    #     uploaded_images = validated_data.pop('uploaded_images', [])
-    #     product = Product.objects.create(**validated_data)
-    #     for img in uploaded_images:
-    #         ProductImage.objects.create(product=product, image=img)
-    #     return product
-
-    # def update(self, instance, validated_data):
-    #     uploaded_images = validated_data.pop('uploaded_images', [])
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-    #     instance.save()
-
-    #     if uploaded_images:
-    #         # Optional: clear previous images
-    #         instance.images.all().delete()
-    #         for img in uploaded_images:
-    #             ProductImage.objects.create(product=instance, image=img)
-
-    #     return instance
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
         product = super().create(validated_data)
