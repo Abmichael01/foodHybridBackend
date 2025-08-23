@@ -139,31 +139,54 @@ class VendorSerializer(serializers.ModelSerializer):
 
 class VendorSignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True, min_length=4)  # ✅ accept username
     password = serializers.CharField(write_only=True, min_length=8)
-    # profile_picture = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = Vendor
         fields = [
-            "vendor_id", "store_name", "store_email",
-            "store_phone", "store_address",
-            "email", "password"
+            "vendor_id", "store_name", "store_email", "store_phone", "store_address",
+            "email", "username", "password"
         ]
         read_only_fields = ["vendor_id"]
 
+    def validate_email(self, value):
+        if Users.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered.")
+        return value
+
+    def validate_username(self, value):
+        if Users.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
+
+    def validate_store_email(self, value):
+        if Vendor.objects.filter(store_email=value).exists():
+            raise serializers.ValidationError("This store email is already registered.")
+        return value
+
+    def validate_store_phone(self, value):
+        if Vendor.objects.filter(store_phone=value).exists():
+            raise serializers.ValidationError("This store phone number is already registered.")
+        return value
+
     def create(self, validated_data):
         email = validated_data.pop("email")
+        username = validated_data.pop("username")
         password = validated_data.pop("password")
 
+        # Create base user
         user = Users.objects.create_user(
-            username=email,
+            username=username,
             email=email,
             password=password,
             user_type='vendor',
         )
 
+        # Create vendor profile
         vendor = Vendor.objects.create(user=user, **validated_data)
         return vendor
+
 
 
 class ROIPayoutSerializer(serializers.ModelSerializer):

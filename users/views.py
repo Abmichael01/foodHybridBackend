@@ -99,16 +99,9 @@ class SignupView(APIView):
 
     def post(self, request):
         resend = request.data.get('resend', False)
-        user_type = request.data.get('user_type', 'partner')  # default to partner
-
-        # choose serializer
-        if user_type == 'vendor':
-            serializer = VendorSignupSerializer(data=request.data)
-        else:
-            serializer = PartnerSignUpSerializer(data=request.data)
+        email = request.data.get('email')
 
         if resend:
-            email = request.data.get('email')
             user = Users.objects.filter(email=email).first()
             if not user:
                 return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -118,10 +111,12 @@ class SignupView(APIView):
             send_email(user, "code", "Your OTP Code", extra_context={"code": otp_code})
             return Response({'detail': 'OTP resent to your email.'}, status=status.HTTP_200_OK)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Always use a basic serializer just for validating email/password
+        base_serializer = PartnerSignUpSerializer(data=request.data)  
+        if not base_serializer.is_valid():
+            return Response(base_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        email = serializer.validated_data['email']
+        email = base_serializer.validated_data['email']
         existing_user = Users.objects.filter(email=email).first()
 
         if existing_user:
@@ -129,24 +124,32 @@ class SignupView(APIView):
                 return Response({'detail': 'Email already verified.'}, status=status.HTTP_400_BAD_REQUEST)
             user = existing_user
         else:
-            user = serializer.save()
+            user = base_serializer.save()  # Just creates the base user
 
         otp = generate_otp()
         EmailOTP.objects.create(user=user, otp=otp)
         send_email(user, "code", "Your OTP Code", extra_context={"code": otp})
 
-        return Response({'detail': 'OTP sent to your email.', 'otp': otp}, status=status.HTTP_200_OK)
+        return Response({'detail': 'OTP sent to your email.'}, status=status.HTTP_200_OK)
 
     def patch(self, request):
-        serializer = CompleteRegistrationSerializer(data=request.data)
+        user_type = request.data.get('user_type', 'partner')  # ✅ Now handled here
+
+        if user_type == 'vendor':
+            serializer = VendorSignupSerializer(data=request.data)
+        else:
+            serializer = CompleteRegistrationSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             email = serializer.validated_data['email']
             user = Users.objects.filter(email=email).first()
             send_email(user, "account_created", "Account Created Successfully!")
-            return Response({'detail': 'Registration Completed, Sign in to access your account!'}, status=status.HTTP_200_OK)
+            return Response(
+                {'detail': 'Registration Completed, Sign in to access your account!'}, 
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class VerifyOTPView(APIView):
     @swagger_auto_schema(  
