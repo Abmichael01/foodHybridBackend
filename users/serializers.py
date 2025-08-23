@@ -1,4 +1,4 @@
-from rest_framework import serializers
+tofrom rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -169,24 +169,6 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         if Vendor.objects.filter(store_phone=value).exists():
             raise serializers.ValidationError("This store phone number is already registered.")
         return value
-
-    def create(self, validated_data):
-        email = validated_data.pop("email")
-        username = validated_data.pop("username")
-        password = validated_data.pop("password")
-
-        # Create base user
-        user = Users.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            user_type='vendor',
-        )
-
-        # Create vendor profile
-        vendor = Vendor.objects.create(user=user, **validated_data)
-        return vendor
-
 
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
