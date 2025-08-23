@@ -150,10 +150,10 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["vendor_id"]
 
-    def validate_email(self, value):
-        if Users.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already registered.")
-        return value
+    # def validate_email(self, value):
+    #     if Users.objects.filter(email=value).exists():
+    #         raise serializers.ValidationError("This email is already registered.")
+    #     return value
 
     def validate_username(self, value):
         if Users.objects.filter(username=value).exists():
