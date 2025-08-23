@@ -73,7 +73,7 @@ class Shop(models.Model):
 #         return f"{self.vendor_id} - {self.store_name}"
 
 class Vendor(models.Model):
-    user = models.OneToOneField("Users", on_delete=models.CASCADE, related_name="vendor_profile")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_profile")
     vendor_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # store details
