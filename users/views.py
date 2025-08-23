@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -30,6 +31,9 @@ from django.contrib.auth import authenticate
 
 # Create your views here.
 
+
+def api_root(request):
+    return JsonResponse({"message": "Backend API root is working!"})
 
 # Partners SignUp   
 # class SignupView(APIView):

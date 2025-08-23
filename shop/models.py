@@ -81,6 +81,7 @@ class Vendor(models.Model):
     store_email = models.EmailField()
     store_phone = models.CharField(max_length=20)
     store_address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
     # logo = models.ImageField(upload_to="vendors/logos/", blank=True, null=True)
 
     def save(self, *args, **kwargs):

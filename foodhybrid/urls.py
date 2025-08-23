@@ -21,6 +21,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
+from users import views as user_views
 
 
 schema_view = get_schema_view(
@@ -37,6 +38,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('api/', user_views.api_root, name='api-root'),
     path('admin/', admin.site.urls),
     path('users/', include("users.urls")),
     path('wallet/', include('wallet.urls')),

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
 
     'corsheaders',
+    'django_hosts',
 
     'users',
     'wallet',
@@ -91,6 +92,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 MIDDLEWARE = [
+    'django_hosts.middleware.HostsRequestMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -105,7 +107,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'foodhybrid.urls'
 SITE_ID = 1
-
+ROOT_HOSTCONF = 'foodhybrid.hosts'
+DEFAULT_HOST = 'www'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
