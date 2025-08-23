@@ -121,10 +121,50 @@ class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+# class VendorSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Vendor
+#         fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
+
 class VendorSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    phone = serializers.CharField(source="user.phone_number", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
+
     class Meta:
         model = Vendor
-        fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
+        fields = ["vendor_id", "first_name", "last_name", "email", "phone", "profile_picture", "created_at"]
+
+class VendorSignupSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
+    profile_picture = serializers.ImageField(write_only=True, required=False)
+
+    class Meta:
+        model = Vendor
+        fields = [
+            "vendor_id", "store_name", "store_email",
+            "store_phone", "store_address",
+            "email", "password"
+        ]
+        read_only_fields = ["vendor_id"]
+
+    def create(self, validated_data):
+        email = validated_data.pop("email")
+        password = validated_data.pop("password")
+
+        user = Users.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            user_type='vendor',
+        )
+
+        vendor = Vendor.objects.create(user=user, **validated_data)
+        return vendor
+
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()

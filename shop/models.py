@@ -46,41 +46,80 @@ class Shop(models.Model):
         return self.name
     
 
-def vendor_profile_picture_upload_path(instance, filename):
-    return f'vendor_profiles/{instance.name}_{filename}'
+# def vendor_profile_picture_upload_path(instance, filename):
+#     return f'vendor_profiles/{instance.name}_{filename}'
 
+# class Vendor(models.Model):
+#     user = models.OneToOneField("Users", on_delete=models.CASCADE, related_name="vendor_profile")
+#     vendor_id = models.CharField(max_length=20, unique=True, editable=False)  # ✅ auto-generated
+#     store_name = models.CharField(max_length=255)
+#     store_email = models.EmailField()
+#     store_phone = models.CharField(max_length=20)
+#     store_address = models.TextField()
+#     # logo = models.ImageField(upload_to="vendors/", null=True, blank=True)
+
+#     def save(self, *args, **kwargs):
+#         if not self.vendor_id:
+#             last_vendor = Vendor.objects.order_by("id").last()
+#             if last_vendor:
+#                 last_id = int(last_vendor.vendor_id.split("-")[-1])
+#                 new_id = last_id + 1
+#             else:
+#                 new_id = 1
+#             self.vendor_id = f"VEND-{new_id:04d}"  # → VEND-0001, VEND-0002, etc.
+#         super().save(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"{self.vendor_id} - {self.store_name}"
 
 class Vendor(models.Model):
-    vendor_id = models.CharField(max_length=120, unique=True, editable=False)
-    name = models.CharField(max_length=255,default="")
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=225,default="")
-    address = models.CharField(max_length=225,default="")
-    profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.OneToOneField("Users", on_delete=models.CASCADE, related_name="vendor_profile")
+    vendor_id = models.CharField(max_length=20, unique=True, blank=True)
+
+    # store details
+    store_name = models.CharField(max_length=255)
+    store_email = models.EmailField()
+    store_phone = models.CharField(max_length=20)
+    store_address = models.TextField()
+    # logo = models.ImageField(upload_to="vendors/logos/", blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.vendor_id:
+            last_id = Vendor.objects.count() + 1
+            self.vendor_id = f"VEND-{last_id:04d}"  # e.g. VEND-0001
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.vendor_id} - {self.store_name}"
+
+# class Vendor(models.Model):
+#     vendor_id = models.CharField(max_length=120, unique=True, editable=False)
+#     name = models.CharField(max_length=255,default="")
+#     email = models.EmailField(unique=True)
+#     phone = models.CharField(max_length=225,default="")
+#     address = models.CharField(max_length=225,default="")
+#     profile_picture = models.ImageField(upload_to=vendor_profile_picture_upload_path, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
     
-    def save(self, *args, **kwargs):
-     if not self.vendor_id:
-         for _ in range(10):  # try 10 times max
-             candidate_id = generate_unique_vendor_id()
-             if not Vendor.objects.filter(vendor_id=candidate_id).exists():
-                 self.vendor_id = candidate_id
-                 break
-         else:
-             raise ValueError("Could not generate a unique vendor_id after 10 attempts.")
-     super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#      if not self.vendor_id:
+#          for _ in range(10):  # try 10 times max
+#              candidate_id = generate_unique_vendor_id()
+#              if not Vendor.objects.filter(vendor_id=candidate_id).exists():
+#                  self.vendor_id = candidate_id
+#                  break
+#          else:
+#              raise ValueError("Could not generate a unique vendor_id after 10 attempts.")
+#      super().save(*args, **kwargs)
 
-    # def save(self, *args, **kwargs):
-    #     if not self.vendor_id:
-    #         self.vendor_id = generate_unique_vendor_id()
-    #     super().save(*args, **kwargs)
+#     # def save(self, *args, **kwargs):
+#     #     if not self.vendor_id:
+#     #         self.vendor_id = generate_unique_vendor_id()
+#     #     super().save(*args, **kwargs)
 
-    def __str__(self):
-        return self.name
-
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 class Product(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="products",null=True, blank=True)

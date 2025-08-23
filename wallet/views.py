@@ -1,18 +1,19 @@
+from time import timezone
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from users.models import Notification, Users
-from .models import Wallet, Transaction, Beneficiary
+from .models import Remittance, Wallet, Transaction, Beneficiary
 from shop.models import PartnerInvestment
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 from .serializers import BeneficiarySerializer
-from .utils import generate_reference
+from .utils import generate_reference, generate_remmittance_reference
 from decimal import Decimal
 from users.utils import verify_user_pin
-from users.permisssion import IsPartner, IsAdmin, IsAdminOrPartner
+from users.permisssion import IsPartner, IsAdmin, IsAdminOrPartner, IsVendor
 from foodhybrid.utils import send_email
 from django.utils.timezone import now
 import stripe
@@ -437,4 +438,72 @@ class BeneficiaryDetailView(APIView):
             return Response({'detail': 'Beneficiary not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
+class VendorRemitView(APIView):
+    permission_classes = [IsVendor]
 
+    def post(self, request):
+        user = request.user
+        if user.user_type != "vendor":
+            return Response({"error": "Only vendors can remit"}, status=status.HTTP_403_FORBIDDEN)
+
+        amount = request.data.get("amount")
+        if not amount:
+            return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        remittance_ref = generate_remmittance_reference()
+        remit = Remittance.objects.create(
+            vendor=user,
+            amount=amount,
+            remittance_id=remittance_ref,
+            status="pending"
+        )
+
+        return Response({
+            "message": "Remittance recorded successfully",
+            "remittance": {
+                "reference": remit.reference,
+                "amount": remit.amount,
+                "status": remit.status,
+                "created_at": remit.created_at
+            }
+        }, status=status.HTTP_201_CREATED)
+    
+class AdminConfirmRemittanceView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, remittance_id):
+        try:
+            remit = Remittance.objects.get(remittance_id=remittance_id)
+        except Remittance.DoesNotExist:
+            return Response({"error": "Remittance not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        action = request.data.get("action")  # "approve" or "reject"
+        note = request.data.get("note", "")  
+        if action not in ["approve", "reject"]:
+            return Response({"error": "Action must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if remit.status != "pending":
+            return Response({"error": f"Remittance already {remit.status}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == "approve":
+            remit.status = "completed"
+            remit.note = note
+        else:
+            remit.status = "rejected"
+            remit.note = note
+
+        remit.confirmed_by = request.user
+        remit.confirmed_at = timezone.now()
+        remit.save()
+
+        return Response({
+            "message": f"Remittance {action}d successfully",
+            "remittance": {
+                "reference": remit.reference,
+                "vendor": remit.vendor.email,
+                "amount": remit.amount,
+                "status": remit.status,
+                "confirmed_by": remit.confirmed_by.email if remit.confirmed_by else None,
+                "confirmed_at": remit.confirmed_at
+            }
+        })

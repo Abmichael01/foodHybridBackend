@@ -38,7 +38,7 @@ class UserManager(BaseUserManager):
 class Users(AbstractBaseUser, PermissionsMixin):
       USER_TYPE_CHOICES = (
         ('admin', 'Admin'),
-        # ('driver', 'Driver'),
+        ('vendor', 'Vendor'),
         ('partner', 'Partner'),
     )
       email = models.EmailField(max_length=255, unique=True)

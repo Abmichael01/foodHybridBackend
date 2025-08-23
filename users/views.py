@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Users, EmailOTP, Driver, OrderDeliveryConfirmation, Notification
 from shop.models import Order, PartnerInvestment, ROIPayout, Vendor
-from wallet.models import Transaction, Wallet
+from wallet.models import Remittance, Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, PartnerListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer
+from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, PartnerListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer, VendorSignupSerializer
 from django.utils import timezone
 from datetime import date, datetime
 from foodhybrid.utils import send_email
@@ -25,32 +25,78 @@ from django.utils import timezone
 from rest_framework.generics import UpdateAPIView, DestroyAPIView,ListAPIView
 from rest_framework.filters import SearchFilter
 from django.db import models
+from django.contrib.auth import authenticate
 
 
 # Create your views here.
 
 
 # Partners SignUp   
+# class SignupView(APIView):
+#     permission_classes = [AllowAny]
+#     def post(self, request):
+#         resend = request.data.get('resend', False)
+#         serializer = PartnerSignUpSerializer(data=request.data)
+#         if resend:
+#             otp_code = generate_otp()
+#             EmailOTP.objects.create(user=user, otp=otp_code)
+#             send_email(user,"code","Your OTP Code", extra_context={"code":otp})
+#             return Response({'detail': 'OTP resent to your email.'}, status=status.HTTP_200_OK)
+        
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         email = serializer.validated_data['email']
+#         existing_user = Users.objects.filter(email=email).first()
+
+#         if existing_user:
+#             if existing_user.is_email_verified:
+#                 return Response({'detail': 'Email already verified.'}, status=status.HTTP_400_BAD_REQUEST)
+           
+#             user = existing_user
+#         else:
+#             user = serializer.save() 
+
+#         otp = generate_otp()
+#         EmailOTP.objects.create(user=user, otp=otp)
+#         send_email(user,"code","Your OTP Code", extra_context={"code":otp})
+
+#         return Response({'detail': 'OTP sent to your email.', 'otp': otp}, status=status.HTTP_200_OK)
+    
+#     def patch(self, request):
+#         serializer = CompleteRegistrationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             email = serializer.validated_data['email']
+#             user = Users.objects.filter(email=email).first()
+#             send_email(user,"account_created", "Account Created Successfully!")
+#             return Response({'detail': 'Registeration Completed, Signin to access your account!.'}, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class SignupView(APIView):
-    # @swagger_auto_schema(request_body=PartnerSignUpSerializer, responses={201: openapi.Response(
-    #         description="OTP sent to your email!",
-    #         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-    #             'message': openapi.Schema(type=openapi.TYPE_STRING),
-    #             'status': openapi.Schema(type=openapi.TYPE_INTEGER),
-    #         })
-    #     )}
-    # )
     permission_classes = [AllowAny]
+
     def post(self, request):
         resend = request.data.get('resend', False)
-        serializer = PartnerSignUpSerializer(data=request.data)
+        user_type = request.data.get('user_type', 'partner')  # default to partner
+
+        # choose serializer
+        if user_type == 'vendor':
+            serializer = VendorSignupSerializer(data=request.data)
+        else:
+            serializer = PartnerSignUpSerializer(data=request.data)
+
         if resend:
+            email = request.data.get('email')
+            user = Users.objects.filter(email=email).first()
+            if not user:
+                return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
             otp_code = generate_otp()
             EmailOTP.objects.create(user=user, otp=otp_code)
-            # send_reg_otp_email(user, otp_code)
-            send_email(user,"code","Your OTP Code", extra_context={"code":otp})
+            send_email(user, "code", "Your OTP Code", extra_context={"code": otp_code})
             return Response({'detail': 'OTP resent to your email.'}, status=status.HTTP_200_OK)
-        
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -60,35 +106,27 @@ class SignupView(APIView):
         if existing_user:
             if existing_user.is_email_verified:
                 return Response({'detail': 'Email already verified.'}, status=status.HTTP_400_BAD_REQUEST)
-           
             user = existing_user
         else:
-            user = serializer.save() 
+            user = serializer.save()
 
         otp = generate_otp()
         EmailOTP.objects.create(user=user, otp=otp)
-        send_email(user,"code","Your OTP Code", extra_context={"code":otp})
+        send_email(user, "code", "Your OTP Code", extra_context={"code": otp})
 
         return Response({'detail': 'OTP sent to your email.', 'otp': otp}, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(request_body=CompleteRegistrationSerializer, responses={201: openapi.Response(
-            description="Registration Completed, Signin to access your account!.",
-            schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING),
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER),
-            })
-        )}
-    )
     def patch(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             email = serializer.validated_data['email']
             user = Users.objects.filter(email=email).first()
-            send_email(user,"account_created", "Account Created Successfully!")
-            return Response({'detail': 'Registeration Completed, Signin to access your account!.'}, status=status.HTTP_200_OK)
+            send_email(user, "account_created", "Account Created Successfully!")
+            return Response({'detail': 'Registration Completed, Sign in to access your account!'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class VerifyOTPView(APIView):
     @swagger_auto_schema(  
         request_body=openapi.Schema(
@@ -162,7 +200,8 @@ class VendorListView(ListAPIView):
     serializer_class = VendorSerializer
     pagination_class = VendorPagination
     filter_backends = [SearchFilter]
-    search_fields = ['name', 'email', 'phone']
+    search_fields = ['user__first_name', 'user__last_name', 'user__email', 'user__phone_number']
+    # search_fields = ['name', 'email', 'phone']
 
 class CreateAndSendDeliveryOTPView(APIView):
     def post(self, request):
@@ -198,9 +237,10 @@ class ConfirmDeliveryView(APIView):
         if delivery.is_confirmed:
             return Response({"detail": "Delivery already confirmed"}, status=400)
 
-        if delivery.confirm_delivery(otp):
+        if delivery.confirm_delivery(otp): 
+            partner = delivery.investment.partner 
             Notification.objects.create(
-                # user=tx.user
+                user=partner.user,
                 title="Order Delivered",
                 message=f"Order {investment_id} successfully delivered to the vendor.",
                 event_type="order",
@@ -215,20 +255,35 @@ class ConfirmDeliveryView(APIView):
                     from_user=request.user.username if request.user else "system",
                     to_user=admin.username
                 )
+            send_email(partner.user,"order_delivered", "Order {investment_id} successfully delivered!")
             return Response({"detail": "Delivery confirmed successfully"}, status=200)
         return Response({"detail": "Invalid OTP"}, status=400)
     
+# class VendorCreateView(APIView):
+#     permission_classes = [IsAdmin]
+#     parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
+
+#     def post(self, request):
+#         serializer = VendorSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({"detail": "Vendor created successfully", "data": serializer.data}, status=201)
+#         return Response(serializer.errors, status=400)
+
 class VendorCreateView(APIView):
-    permission_classes = [IsAdmin]
-    parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
+    permission_classes = [AllowAny]  # ✅ anyone can signup
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        serializer = VendorSerializer(data=request.data)
+        serializer = VendorSignupSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"detail": "Vendor created successfully", "data": serializer.data}, status=201)
+            vendor = serializer.save()
+            return Response({
+                "detail": "Vendor registered successfully",
+                "vendor": VendorSignupSerializer(vendor).data
+            }, status=201)
         return Response(serializer.errors, status=400)
-
+    
 
 # class ResendOTPView(APIView):
     # @swagger_auto_schema(
@@ -483,24 +538,6 @@ class ChangePasswordView(APIView):
 
 # parners and admin signin
 class SigninView(APIView): 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING),
-                'password': openapi.Schema(type=openapi.TYPE_STRING),
-                'user_type': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-            required=['username', 'password', 'user_type']
-        ),
-        responses={201: openapi.Response(
-            description="Sign In successful!",
-            schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING),
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER),
-            })
-        )}
-    )
     def post(self, request):
         login_input = request.data.get('username')  # Can be username or email
         password = request.data.get('password')
@@ -1361,20 +1398,20 @@ class AdminVendorDashboardView(APIView):
         vendors = Vendor.objects.all()
         total_vendors = vendors.count()
 
-        total_remittance = PartnerInvestment.objects.aggregate(
-            total=Sum('amount_invested')
+        total_remittance = Remittance.objects.aggregate(
+            total=Sum('amount')
         )['total'] or 0
 
-        today_remittance = PartnerInvestment.objects.filter(
+        today_remittance = Remittance.objects.filter(
             created_at__date=date.today()
-        ).aggregate(total=Sum('amount_invested'))['total'] or 0
+        ).aggregate(total=Sum('amount'))['total'] or 0
 
         serialized_vendors = VendorOverviewSerializer(vendors, many=True).data
 
         return Response({
             'total_vendors': total_vendors,
-            'total_remittance': 0,
-            'today_remittance': 0,
+            'total_remittance': total_remittance,
+            'today_remittance': today_remittance,
             'vendors': serialized_vendors
         })
     
@@ -1422,16 +1459,39 @@ class VendorDetailWithOrdersView(APIView):
         vendor_order_refs = Order.objects.filter(vendor=vendor).values_list('reference', flat=True)
 
 # Filter transactions with those order_ids and remittance type
-        todays_remittance = Transaction.objects.filter(
-            order_id__in=vendor_order_refs,
-            transaction_type='remittance',
-            created_at__date=today
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        # todays_remittance = Transaction.objects.filter(
+        #     order_id__in=vendor_order_refs,
+        #     transaction_type='remittance',
+        #     created_at__date=today
+        # ).aggregate(total=Sum('amount'))['total'] or 0
 
-        total_remittance = Transaction.objects.filter(
-            order_id__in=vendor_order_refs,
-            transaction_type='remittance',
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        # total_remittance = Transaction.objects.filter(
+        #     order_id__in=vendor_order_refs,
+        #     transaction_type='remittance',
+        # ).aggregate(total=Sum('amount'))['total'] or 0
+
+        # total_remittance = Remittance.objects.aggregate(
+        #     total=Sum('amount')
+        # )['total'] or 0
+
+        # todays_remittance = Remittance.objects.filter(
+        #     created_at__date=date.today()
+        # ).aggregate(total=Sum('amount'))['total'] or 0
+
+        todays_remittance = Remittance.objects.filter(
+    created_at__date=date.today()
+).values(
+    'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
+).annotate(
+    total_remittance=Sum('amount')
+).order_by('-total_remittance')
+        
+                
+        total_remittance = Remittance.objects.values(
+            'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
+        ).annotate(
+            total_remittance=Sum('amount')
+        ).order_by('-total_remittance')
 
         # Transactions list (filtered by "remittance" type)
         transactions_qs = Transaction.objects.filter(
@@ -1961,3 +2021,4 @@ class AdminOrderDeliveryDetailView(APIView):
 
         serializer = OrderDeliveryConfirmationSerializer(confirmation)
         return Response(serializer.data, status=status.HTTP_200_OK)
+

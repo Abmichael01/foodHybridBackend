@@ -70,3 +70,20 @@ class Beneficiary(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.account_number}"
+
+class Remittance(models.Model):
+    vendor = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="remittances")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    remittance_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[("pending", "Pending"), ("completed", "Completed"), ("rejected", "Rejected")],
+        default="pending"
+    )
+    note = models.TextField(null=True, blank=True) 
+    confirmed_by = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True, related_name="confirmed_remittances")
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.vendor.email} - {self.amount} ({self.status})"
