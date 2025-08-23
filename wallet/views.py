@@ -521,10 +521,12 @@ def stripe_webhook(request):
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except stripe.error.SignatureVerificationError:
+        return JsonResponse({"error": "Invalid signature"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
-    # ----- FUND WALLET -----
+    # ---------------- FUND WALLET ----------------
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         user_id = intent["metadata"].get("user_id")
@@ -547,6 +549,9 @@ def stripe_webhook(request):
             tx.available_balance_at_time = wallet.balance
             tx.save()
 
+            # Optional: notify user
+            # send_notification(user_id, f"Wallet funded successfully: {amount}")
+
     elif event["type"] == "payment_intent.payment_failed":
         intent = event["data"]["object"]
         user_id = intent["metadata"].get("user_id")
@@ -564,8 +569,10 @@ def stripe_webhook(request):
             tx.status = "failed"
             tx.save()
 
-    # ----- WITHDRAWAL -----
-    # If using Stripe Payouts (Custom/Express Connect)
+            # Optional: notify user
+            # send_notification(user_id, f"Wallet funding failed: {amount}")
+
+    # ---------------- WITHDRAWALS (Stripe Payouts) ----------------
     elif event["type"] == "payout.paid":
         payout = event["data"]["object"]
         reference = payout.get("metadata", {}).get("reference")
@@ -574,7 +581,7 @@ def stripe_webhook(request):
         if tx:
             tx.status = "success"
             tx.save()
-            # Optionally notify user that withdrawal succeeded
+            # send_notification(tx.user.id, f"Withdrawal successful: {tx.amount}")
 
     elif event["type"] == "payout.failed":
         payout = event["data"]["object"]
@@ -584,7 +591,7 @@ def stripe_webhook(request):
         if tx:
             tx.status = "failed"
             tx.save()
-            # Optionally notify user that withdrawal failed
+            # send_notification(tx.user.id, f"Withdrawal failed: {tx.amount}")
 
     return JsonResponse({"status": "ok"})
 # --------STRIPE WEBHOOK.PY--------
