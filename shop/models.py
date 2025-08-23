@@ -46,8 +46,8 @@ class Shop(models.Model):
         return self.name
     
 
-# def vendor_profile_picture_upload_path(instance, filename):
-#     return f'vendor_profiles/{instance.name}_{filename}'
+def vendor_profile_picture_upload_path(instance, filename):
+    return f'vendor_profiles/{instance.name}_{filename}'
 
 # class Vendor(models.Model):
 #     user = models.OneToOneField("Users", on_delete=models.CASCADE, related_name="vendor_profile")
@@ -73,14 +73,14 @@ class Shop(models.Model):
 #         return f"{self.vendor_id} - {self.store_name}"
 
 class Vendor(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_profile")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_profile", default=None)
     vendor_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # store details
-    store_name = models.CharField(max_length=255)
-    store_email = models.EmailField()
-    store_phone = models.CharField(max_length=20)
-    store_address = models.TextField()
+    store_name = models.CharField(max_length=255,null=True, blank=True)
+    store_email = models.EmailField(null=True, blank=True)
+    store_phone = models.CharField(max_length=20,null=True, blank=True)
+    store_address = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     # logo = models.ImageField(upload_to="vendors/logos/", blank=True, null=True)
 
