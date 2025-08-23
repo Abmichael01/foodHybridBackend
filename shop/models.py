@@ -73,7 +73,7 @@ def vendor_profile_picture_upload_path(instance, filename):
 #         return f"{self.vendor_id} - {self.store_name}"
 
 class Vendor(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_profile", default=None)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_profile", null=True, blank=True)
     vendor_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # store details
