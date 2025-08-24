@@ -461,7 +461,7 @@ class VendorRemitView(APIView):
         )
 
         return Response({
-            "message": "Remittance recorded successfully",
+            "message": "Remittance awaiting confirmation",
             "remittance": {
                 "reference": remit.reference,
                 "amount": remit.amount,

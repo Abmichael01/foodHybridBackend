@@ -240,10 +240,14 @@ class CreateAndSendDeliveryOTPView(APIView):
         # Save and generate OTP
         delivery = serializer.save()
         otp = delivery.generate_otp()
+        
+        # 🔑 Get the vendor related to this investment
+        vendor = investment.product.vendor  # adjust depending on your model
+        user = vendor.user.email or vendor.store_email 
 
         # Send email
-        EmailOTP.objects.create(user=delivery.store_name, otp=otp)
-        send_email(delivery,"code","Your OTP Code", extra_context={"code":otp})
+        EmailOTP.objects.create(user, otp=otp)
+        send_email(user,"code","Your OTP Code", extra_context={"code":otp})
         # send_otp_email(delivery.owner_email, otp, delivery.store_name)
         return Response({"detail": "Delivery created and OTP sent"}, status=201)
 
