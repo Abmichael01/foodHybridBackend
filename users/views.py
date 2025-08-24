@@ -283,6 +283,8 @@ class ConfirmDeliveryView(APIView):
             return Response({"detail": "Delivery confirmed successfully"}, status=200)
         return Response({"detail": "Invalid OTP"}, status=400)
     
+
+
 # class VendorCreateView(APIView):
 #     permission_classes = [IsAdmin]
 #     parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
