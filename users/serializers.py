@@ -75,12 +75,12 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
         model = OrderDeliveryConfirmation
         fields = [
             'order_id',
-            'owner_name',
-            'owner_email',
-            'store_name',
-            'store_email',
-            'store_phone',
-            'store_address',
+            # 'owner_name',
+            # 'owner_email',
+            # 'store_name',
+            # 'store_email',
+            # 'store_phone',
+            # 'store_address',
         ]
 
     def create(self, validated_data):
