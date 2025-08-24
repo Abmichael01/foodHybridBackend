@@ -126,7 +126,19 @@ class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
 #         model = Vendor
 #         fields = ['id','vendor_id', 'name', 'email', 'phone', 'profile_picture', 'created_at']
 
+# class VendorSerializer(serializers.ModelSerializer):
+#     email = serializers.EmailField(source="user.email", read_only=True)
+#     phone = serializers.CharField(source="user.phone_number", read_only=True)
+#     first_name = serializers.CharField(source="user.first_name", read_only=True)
+#     last_name = serializers.CharField(source="user.last_name", read_only=True)
+#     profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
+
+#     class Meta:
+#         model = Vendor
+#         fields = ["vendor_id", "first_name", "last_name", "email", "phone", "profile_picture", "created_at"]
+
 class VendorSerializer(serializers.ModelSerializer):
+    # extra fields coming from the related User model
     email = serializers.EmailField(source="user.email", read_only=True)
     phone = serializers.CharField(source="user.phone_number", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
@@ -135,7 +147,18 @@ class VendorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ["vendor_id", "first_name", "last_name", "email", "phone", "profile_picture", "created_at"]
+        fields = "__all__"   # ✅ includes all Vendor model fields
+        # now we append extra user fields as well
+        extra_fields = ["first_name", "last_name", "email", "phone", "profile_picture"]
+
+    def get_field_names(self, declared_fields, info):
+        """
+        Override to include both Vendor fields and extra User fields.
+        """
+        expanded_fields = super().get_field_names(declared_fields, info)
+        if hasattr(self.Meta, "extra_fields"):
+            return expanded_fields + self.Meta.extra_fields
+        return expanded_fields
 
 class VendorSignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
