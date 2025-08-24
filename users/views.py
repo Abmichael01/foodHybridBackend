@@ -317,16 +317,16 @@ class ConfirmDeliveryView(APIView):
     
 
 
-# class VendorCreateView(APIView):
-#     permission_classes = [IsAdmin]
-#     parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
+class VendorCreateView(APIView):
+    permission_classes = [IsAdmin]
+    parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
 
-#     def post(self, request):
-#         serializer = VendorSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({"detail": "Vendor created successfully", "data": serializer.data}, status=201)
-#         return Response(serializer.errors, status=400)
+    def post(self, request):
+        serializer = VendorSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Vendor created successfully", "data": serializer.data}, status=201)
+        return Response(serializer.errors, status=400)
 
 class VendorCreateView(APIView):
     permission_classes = [AllowAny]  # ✅ anyone can signup
@@ -1984,7 +1984,7 @@ class AdminSingleROICycleBreakdownView(APIView):
             profile_picture_url = None
 
         
-        if inv.vendor.profile_picture:
+        if inv.vendor.user.profile_picture:
             vendor_profile_picture_url = inv.vendor.user.profile_picture.url
         else:
             vendor_profile_picture_url = None
