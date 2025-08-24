@@ -233,7 +233,7 @@ class CreateAndSendDeliveryOTPView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Check if already exists
-        investment = serializer.validated_data['investment']
+        investment = serializer.validated_data['order_id']
         if OrderDeliveryConfirmation.objects.filter(investment=investment).exists():
             return Response({"detail": "Delivery already initiated for this investment"}, status=400)
 
@@ -1514,14 +1514,14 @@ class VendorDetailWithOrdersView(APIView):
     'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
 ).annotate(
     total_remittance=Sum('amount')
-).order_by('-total_remittance')
+).order_by('-total_remittance') or 0
         
                 
         total_remittance = Remittance.objects.values(
             'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
         ).annotate(
             total_remittance=Sum('amount')
-        ).order_by('-total_remittance')
+        ).order_by('-total_remittance') or 0
 
         # Transactions list (filtered by "remittance" type)
         transactions_qs = Transaction.objects.filter(
