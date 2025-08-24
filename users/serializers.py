@@ -605,10 +605,12 @@ class VendorOrderSerializer(serializers.ModelSerializer):
 
 class VendorDetailSerializer(serializers.ModelSerializer):
     recent_orders = serializers.SerializerMethodField()
+    email = serializers.EmailField(source="user.email", read_only=True)
+    name = serializers.CharField(source="user.first_name", read_only=True) 
 
     class Meta:
         model = Vendor
-        fields = ['vendor_id', 'name', 'email', 'phone', 'address', 'profile_picture', 'created_at', 'recent_orders']
+        fields = ['vendor_id', 'name', 'email', 'store_name', 'store_email', 'store_phone', 'store_address', 'profile_picture', 'created_at', 'recent_orders']
 
     def get_recent_orders(self, obj):
         limit = self.context.get('order_limit', 10)  # Default if not provided
@@ -617,6 +619,8 @@ class VendorDetailSerializer(serializers.ModelSerializer):
 
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    name = serializers.CharField(source="user.first_name", read_only=True) 
     total_remittance = serializers.SerializerMethodField()
     today_remittance = serializers.SerializerMethodField()
     # total_orders = serializers.SerializerMethodField()
@@ -624,8 +628,8 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ['id','vendor_id', 'name', 'email', 'phone', 'address',
-                  'total_remittance', 'today_remittance']
+        fields = ['id','vendor_id', 'name', 'email', 'store_phone', 'store_address',
+                  'store_email', 'store_name','total_remittance', 'today_remittance']
 
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
