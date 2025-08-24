@@ -74,13 +74,7 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderDeliveryConfirmation
         fields = [
-            'order_id',
-            # 'owner_name',
-            # 'owner_email',
-            # 'store_name',
-            # 'store_email',
-            # 'store_phone',
-            # 'store_address',
+            'order_id'
         ]
 
     def create(self, validated_data):

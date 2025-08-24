@@ -227,30 +227,58 @@ class VendorListView(ListAPIView):
     search_fields = ['user__first_name', 'user__last_name', 'user__email', 'user__phone_number']
     # search_fields = ['name', 'email', 'phone']
 
+# class CreateAndSendDeliveryOTPView(APIView):
+#     def post(self, request):
+#         serializer = DeliveryConfirmationCreateSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+
+#         # Check if already exists
+#         investment = serializer.validated_data['order_id']
+#         if OrderDeliveryConfirmation.objects.filter(investment=investment).exists():
+#             return Response({"detail": "Delivery already initiated for this investment"}, status=400)
+
+#         # Save and generate OTP
+#         delivery = serializer.save()
+#         otp = delivery.generate_otp()
+        
+#         # 🔑 Get the vendor related to this investment
+#         vendor = investment.product.vendor  # adjust depending on your model
+#         user = vendor.user.email or vendor.store_email 
+
+#         # Send email
+#         EmailOTP.objects.create(user, otp=otp)
+#         send_email(user,"code","Your OTP Code", extra_context={"code":otp})
+#         # send_otp_email(delivery.owner_email, otp, delivery.store_name)
+#         return Response({"detail": "Delivery created and OTP sent"}, status=201)
+
+
 class CreateAndSendDeliveryOTPView(APIView):
     def post(self, request):
         serializer = DeliveryConfirmationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Check if already exists
-        investment = serializer.validated_data['order_id']
-        if OrderDeliveryConfirmation.objects.filter(investment=investment).exists():
-            return Response({"detail": "Delivery already initiated for this investment"}, status=400)
-
         # Save and generate OTP
         delivery = serializer.save()
+        investment = delivery.investment   # ✅ investment comes from delivery
         otp = delivery.generate_otp()
         
         # 🔑 Get the vendor related to this investment
-        vendor = investment.product.vendor  # adjust depending on your model
-        user = vendor.user.email or vendor.store_email 
+        vendor = investment.product.vendor  # or investment.shop.vendor depending on your model
+        vendor_user = vendor.user
+        vendor_email = vendor_user.email or vendor.store_email
+
+        # Save OTP
+        EmailOTP.objects.create(user=vendor_user, otp=otp)
 
         # Send email
-        EmailOTP.objects.create(user, otp=otp)
-        send_email(user,"code","Your OTP Code", extra_context={"code":otp})
-        # send_otp_email(delivery.owner_email, otp, delivery.store_name)
-        return Response({"detail": "Delivery created and OTP sent"}, status=201)
+        send_email(
+            vendor_email,
+            "Delivery OTP Code",
+            "Your OTP Code",
+            extra_context={"code": otp}
+        )
 
+        return Response({"detail": "Delivery created and OTP sent"}, status=201)
 
 class ConfirmDeliveryView(APIView):
     def post(self, request):
@@ -1760,7 +1788,7 @@ class AdminDashboardView(APIView):
                 "created_at":order.created_at,
                 "order_id": order.order_id,
                 "partner_name": getattr(order.partner, "get_full_name", lambda: str(order.partner))(),
-                "vendor_name": order.vendor.name if order.vendor else None,
+                "vendor_name": order.vendor.store_name if order.vendor else None,
                 "amount": order.amount_invested,
                 "status": order.status,
                 "products": [p.name for p in order.product.all()]
@@ -1957,7 +1985,7 @@ class AdminSingleROICycleBreakdownView(APIView):
 
         
         if inv.vendor.profile_picture:
-            vendor_profile_picture_url = inv.vendor.profile_picture.url
+            vendor_profile_picture_url = inv.vendor.user.profile_picture.url
         else:
             vendor_profile_picture_url = None
 
