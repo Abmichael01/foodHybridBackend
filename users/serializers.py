@@ -607,6 +607,7 @@ class VendorDetailSerializer(serializers.ModelSerializer):
     recent_orders = serializers.SerializerMethodField()
     email = serializers.EmailField(source="user.email", read_only=True)
     name = serializers.CharField(source="user.first_name", read_only=True) 
+    profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
 
     class Meta:
         model = Vendor
