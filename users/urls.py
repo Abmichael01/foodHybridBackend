@@ -31,6 +31,7 @@ urlpatterns = [
     path("delivery/initiate/", CreateAndSendDeliveryOTPView.as_view(), name="initiate-delivery"),
     path("delivery/confirm/", ConfirmDeliveryView.as_view(), name="confirm-delivery"),
     path("vendors/create/", VendorCreateView.as_view(), name="vendor-create"),
+    path("admin/vendors/create/", AdminCreateVendorView.as_view(), name="admin-vendor-create"),
     path("vendors/<str:vendor_id>/delete/", VendorDeleteView.as_view(), name="vendor-delete"),
     path("vendors/<str:vendor_id>/update/", VendorUpdateView.as_view(), name="vendor-update"),
     path("vendors/", VendorListView.as_view(), name="vendor-list"),

@@ -317,7 +317,7 @@ class ConfirmDeliveryView(APIView):
     
 
 
-class VendorCreateView(APIView):
+class AdminCreateVendorView(APIView):
     permission_classes = [IsAdmin]
     parser_classes = [MultiPartParser, FormParser]  # to handle image uploads
 

@@ -158,19 +158,16 @@ class VendorSignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     username = serializers.CharField(write_only=True, min_length=4)  # ✅ accept username
     password = serializers.CharField(write_only=True, min_length=8)
+    first_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Vendor
         fields = [
             "vendor_id", "store_name", "store_email", "store_phone", "store_address",
-            "email", "username", "password"
+            "email", "username", "password", "first_name", "last_name"
         ]
         read_only_fields = ["vendor_id"]
-
-    # def validate_email(self, value):
-    #     if Users.objects.filter(email=value).exists():
-    #         raise serializers.ValidationError("This email is already registered.")
-    #     return value
 
     def validate_username(self, value):
         if Users.objects.filter(username=value).exists():
@@ -191,26 +188,52 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         email = validated_data.pop("email")
         username = validated_data.pop("username")
         password = validated_data.pop("password")
-   # Find existing user
-        try:
-            user = Users.objects.get(email=email)
-        except Users.DoesNotExist:
-            raise serializers.ValidationError("User with this email does not exist")
+        first_name = validated_data.pop("first_name", "")
+        last_name = validated_data.pop("last_name", "")
 
-        # Update password
+          # find existing user OR create new one
+        user, created = Users.objects.get_or_create(
+            email=email,
+            defaults={
+                "username": username,
+                "first_name": first_name,
+                "last_name": last_name,
+            }
+        )
+
+        # update fields if user already existed
+        user.first_name = first_name or user.first_name
+        user.last_name = last_name or user.last_name
         if password:
             user.set_password(password)
-
         user.user_type = "vendor"
         user.save()
 
-        # Update vendor details (linked by user)
+        # link/create vendor
         vendor, created = Vendor.objects.update_or_create(
             user=user,
             defaults=validated_data
         )
+   # Find existing user
+        # try:
+        #     user = Users.objects.get(email=email)
+        # except Users.DoesNotExist:
+        #     raise serializers.ValidationError("User with this email does not exist")
 
-        return vendor
+        # # Update password
+        # if password:
+        #     user.set_password(password)
+
+        # user.user_type = "vendor"
+        # user.save()
+
+        # # Update vendor details (linked by user)
+        # vendor, created = Vendor.objects.update_or_create(
+        #     user=user,
+        #     defaults=validated_data
+        # )
+
+        # return vendor
 
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
@@ -320,7 +343,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
         return obj.partner.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
 
     def get_vendor_name(self, obj):
-        return obj.vendor.user.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
+        return obj.vendor.user.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.vendor.user)
 
 
     def get_partner_profile_picture(self, obj):
@@ -328,7 +351,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     
     
     def get_vendor_profile_picture(self, obj):
-        return obj.vendor.user.profile_picture.url if obj.partner and obj.partner.profile_picture else None
+        return obj.vendor.user.profile_picture.url if obj.vendor and obj.vendor.profile_picture else None
 
 
     def get_product(self, obj):
