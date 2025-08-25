@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from shop.models import Vendor
-from .models import Transaction, Beneficiary
+from .models import Transaction, Beneficiary, VendorasBeneficiary
 
 class TransactionSerializer(serializers.ModelSerializer):
     from_user = serializers.SerializerMethodField()
@@ -53,12 +53,13 @@ class VendorMiniSerializer(serializers.ModelSerializer):
         model = Vendor
         fields = ["id", "store_name", "store_email", "store_phone", "store_address"]
 
-class BeneficiarySerializer(serializers.ModelSerializer):
+class VendorBeneficiarySerializer(serializers.ModelSerializer):
     vendor = VendorMiniSerializer(read_only=True)
     vendor_id = serializers.PrimaryKeyRelatedField(
         queryset=Vendor.objects.all(), source="vendor", write_only=True
     )
+    alias = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
-        model = Beneficiary
+        model = VendorasBeneficiary
         fields = ["id", "vendor", "vendor_id", "alias", "created_at"]

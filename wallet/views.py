@@ -5,12 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
 from users.models import Notification, Users
-from .models import Remittance, Wallet, Transaction, Beneficiary
+from .models import Remittance, VendorasBeneficiary, Wallet, Transaction, Beneficiary
 from shop.models import PartnerInvestment
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
-from .serializers import BeneficiarySerializer
+from .serializers import BeneficiarySerializer, VendorBeneficiarySerializer
 from .utils import generate_reference, generate_remmittance_reference
 from decimal import Decimal
 from users.utils import verify_user_pin
@@ -512,22 +512,22 @@ class AdminConfirmRemittanceView(APIView):
 
 
 class BeneficiaryListCreateView(generics.ListCreateAPIView):
-    serializer_class = BeneficiarySerializer
+    serializer_class = VendorBeneficiarySerializer
     permission_classes = [IsPartner]
 
     def get_queryset(self):
-        return Beneficiary.objects.filter(partner=self.request.user)
+        return VendorasBeneficiary.objects.filter(partner=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(partner=self.request.user)
 
 
 class BeneficiaryDeleteView(generics.DestroyAPIView):
-    serializer_class = BeneficiarySerializer
+    serializer_class = VendorBeneficiarySerializer
     permission_classes = [IsPartner]
 
     def get_queryset(self):
-        return Beneficiary.objects.filter(partner=self.request.user)
+        return VendorasBeneficiary.objects.filter(partner=self.request.user)
 
 
 # --------STRIPE WEBHOOK.PY--------
