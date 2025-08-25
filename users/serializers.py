@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from shop.serializers import ProductSerializer
+from wallet.models import Transaction
 from .models import Users, Driver,OrderDeliveryConfirmation, Notification, EmailOTP
 from shop.models import PartnerInvestment, Product, ROIPayout, OrderItem, Order, Vendor
 from datetime import timedelta
@@ -942,3 +943,42 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+
+
+class PartnerInvestmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PartnerInvestment
+        fields = [
+            "id", "order_id", "amount", "status",
+            "total_roi", "roi_collected", "pending_roi", "created_at"
+        ]
+
+
+class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderDeliveryConfirmation
+        fields = ["id", "investment", "otp", "verified", "created_at"]
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ["id", "amount", "transaction_type", "status", "created_at"]
+
+
+class VendorDashboardSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    investments = PartnerInvestmentSerializer(many=True, source="partnerinvestment_set")
+    deliveries = OrderDeliveryConfirmationSerializer(
+        many=True, source="orderdeliveryconfirmation_set"
+    )
+    transactions = TransactionSerializer(many=True, source="transactions")
+
+    class Meta:
+        model = Vendor
+        fields = [
+            "id", "store_name", "store_email", "store_phone",
+            "store_address", "user_email", "user_name",
+            "investments", "deliveries", "transactions"
+        ]

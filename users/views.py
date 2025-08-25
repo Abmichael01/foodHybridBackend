@@ -7,7 +7,7 @@ from shop.models import Order, PartnerInvestment, ROIPayout, Vendor
 from wallet.models import Remittance, Transaction, Wallet
 from wallet.serializers import TransactionSerializer 
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, PartnerListSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer, VendorSignupSerializer
+from .serializers import AdminOrderSerializer, DeliveryConfirmationCreateSerializer, PartnerAdminReportSerializer, PartnerDetailSerializer, PartnerInvestmentListSerializer, PartnerListSerializer, VendorDashboardSerializer, VendorDetailSerializer, VendorOverviewSerializer, VendorSerializer, PartnerInvestmentSerializer, PartnerProfileSerializer, PartnerSignUpSerializer, DriverCreateSerializer, DriverLoginSerializer, OrderDeliveryConfirmationSerializer, CompleteRegistrationSerializer, ResetPasswordOTPSerializer, NotificationSerializer, VendorSignupSerializer
 from django.utils import timezone
 from datetime import date, datetime
 from foodhybrid.utils import send_email
@@ -16,14 +16,14 @@ from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Sum, Q
 from .utils import generate_otp, get_tokens_for_user,set_user_pin,retrieve_user_pin
-from .permisssion import IsPartner, IsAdmin
+from .permisssion import IsPartner, IsAdmin, IsVendor
 from rest_framework.permissions import AllowAny
 from django.utils.timezone import now
 from django.db.models.functions import TruncDate
 from decimal import Decimal
 import os
 from django.utils import timezone
-from rest_framework.generics import UpdateAPIView, DestroyAPIView,ListAPIView
+from rest_framework.generics import UpdateAPIView, DestroyAPIView,ListAPIView, RetrieveAPIView
 from rest_framework.filters import SearchFilter
 from django.db import models
 from django.contrib.auth import authenticate
@@ -2096,3 +2096,9 @@ class AdminOrderDeliveryDetailView(APIView):
         serializer = OrderDeliveryConfirmationSerializer(confirmation)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class VendorDashboardView(RetrieveAPIView):
+    serializer_class = VendorDashboardSerializer
+    permission_classes = [IsVendor]
+
+    def get_object(self):
+        return Vendor.objects.get(user=self.request.user)
