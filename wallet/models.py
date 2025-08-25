@@ -1,4 +1,7 @@
 # wallet/models.py
+from datetime import timezone
+import random
+import uuid
 from django.conf import settings
 from django.db import models
 from users.models import Users
@@ -76,22 +79,26 @@ class Beneficiary(models.Model):
     def __str__(self):
         return f"{self.name} - {self.account_number}"
 
+        
 class Remittance(models.Model):
-    vendor = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="remittances")
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="remittances")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    remittance_id = models.CharField(max_length=100, unique=True)
+    remittance_id = models.CharField(max_length=20, unique=True, default=uuid.uuid4)
     status = models.CharField(
         max_length=20,
-        choices=[("pending", "Pending"), ("completed", "Completed"), ("rejected", "Rejected")],
+        choices=[("pending", "Pending"), ("completed", "Completed"), ("failed", "Failed")],
         default="pending"
     )
-    note = models.TextField(null=True, blank=True) 
-    confirmed_by = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True, related_name="confirmed_remittances")
-    confirmed_at = models.DateTimeField(null=True, blank=True)
+    otp = models.CharField(max_length=6, null=True, blank=True)
+    otp_expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.vendor.email} - {self.amount} ({self.status})"
+    def generate_otp(self):
+        otp_code = str(random.randint(1000, 9999))  # 4-digit OTP
+        self.otp = otp_code
+        self.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
+        self.save()
+        return otp_code
     
 
 class VendorasBeneficiary(models.Model):

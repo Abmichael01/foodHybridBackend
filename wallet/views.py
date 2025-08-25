@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from users.models import Notification, Users
 from .models import Remittance, VendorasBeneficiary, Wallet, Transaction, Beneficiary
-from shop.models import PartnerInvestment
+from shop.models import PartnerInvestment, Vendor
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
@@ -440,6 +440,36 @@ class BeneficiaryDetailView(APIView):
             return Response({'detail': 'Beneficiary not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
+# class VendorRemitView(APIView):
+#     permission_classes = [IsVendor]
+
+#     def post(self, request):
+#         user = request.user
+#         if user.user_type != "vendor":
+#             return Response({"error": "Only vendors can remit"}, status=status.HTTP_403_FORBIDDEN)
+
+#         amount = request.data.get("amount")
+#         if not amount:
+#             return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         remittance_ref = generate_remmittance_reference()
+#         remit = Remittance.objects.create(
+#             vendor=user,
+#             amount=amount,
+#             remittance_id=remittance_ref,
+#             status="pending"
+#         )
+
+#         return Response({
+#             "message": "Remittance awaiting confirmation",
+#             "remittance": {
+#                 "reference": remit.remittance_id,
+#                 "amount": remit.amount,
+#                 "status": remit.status,
+#                 "created_at": remit.created_at
+#             }
+#         }, status=status.HTTP_201_CREATED)
+
 class VendorRemitView(APIView):
     permission_classes = [IsVendor]
 
@@ -451,7 +481,7 @@ class VendorRemitView(APIView):
         amount = request.data.get("amount")
         if not amount:
             return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         remittance_ref = generate_remmittance_reference()
         remit = Remittance.objects.create(
             vendor=user,
@@ -460,8 +490,15 @@ class VendorRemitView(APIView):
             status="pending"
         )
 
+        # Generate OTP
+        otp = remit.generate_otp()
+
+        # TODO: Send OTP via email/SMS (pseudo)
+        # send_sms(user.phone, f"Your remittance OTP is {otp}")
+        send_email(user, "code", "Your OTP Code", extra_context={"code": otp})
+
         return Response({
-            "message": "Remittance awaiting confirmation",
+            "message": "Remittance initiated. Please confirm with OTP.",
             "remittance": {
                 "reference": remit.remittance_id,
                 "amount": remit.amount,
@@ -469,58 +506,149 @@ class VendorRemitView(APIView):
                 "created_at": remit.created_at
             }
         }, status=status.HTTP_201_CREATED)
-    
-class AdminConfirmRemittanceView(APIView):
-    permission_classes = [IsAdmin]
 
-    def post(self, request, remittance_id):
+class ConfirmRemittanceView(APIView):
+    permission_classes = [IsVendor]
+
+    def post(self, request):
+        reference = request.data.get("reference")
+        otp = request.data.get("otp")
+
         try:
-            remit = Remittance.objects.get(remittance_id=remittance_id)
+            remit = Remittance.objects.get(remittance_id=reference, vendor=request.user)
         except Remittance.DoesNotExist:
-            return Response({"error": "Remittance not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        action = request.data.get("action")  # "approve" or "reject"
-        note = request.data.get("note", "")  
-        if action not in ["approve", "reject"]:
-            return Response({"error": "Action must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid remittance reference"}, status=status.HTTP_404_NOT_FOUND)
 
         if remit.status != "pending":
-            return Response({"error": f"Remittance already {remit.status}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Remittance already processed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if action == "approve":
-            remit.status = "completed"
-            remit.note = note
-        else:
-            remit.status = "rejected"
-            remit.note = note
+        if not remit.otp or remit.otp != otp:
+            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
-        remit.confirmed_by = request.user
-        remit.confirmed_at = now()
+        if remit.otp_expires_at < timezone.now():
+            return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Mark remittance as completed
+        remit.status = "completed"
+        remit.otp = None  # clear OTP
+        remit.otp_expires_at = None
         remit.save()
 
         return Response({
-            "message": f"Remittance {action}d successfully",
+            "message": "Remittance confirmed successfully",
             "remittance": {
                 "reference": remit.remittance_id,
-                "vendor": remit.vendor.email,
                 "amount": remit.amount,
                 "status": remit.status,
-                "confirmed_by": remit.confirmed_by.email if remit.confirmed_by else None,
-                "confirmed_at": remit.confirmed_at
+                "created_at": remit.created_at
             }
-        })
+        }, status=status.HTTP_200_OK)
+
+    
+# class AdminConfirmRemittanceView(APIView):
+#     permission_classes = [IsAdmin]
+
+#     def post(self, request, remittance_id):
+#         try:
+#             remit = Remittance.objects.get(remittance_id=remittance_id)
+#         except Remittance.DoesNotExist:
+#             return Response({"error": "Remittance not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         action = request.data.get("action")  # "approve" or "reject"
+#         note = request.data.get("note", "")  
+#         if action not in ["approve", "reject"]:
+#             return Response({"error": "Action must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if remit.status != "pending":
+#             return Response({"error": f"Remittance already {remit.status}"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if action == "approve":
+#             remit.status = "completed"
+#             remit.note = note
+#         else:
+#             remit.status = "rejected"
+#             remit.note = note
+
+#         remit.confirmed_by = request.user
+#         remit.confirmed_at = now()
+#         remit.save()
+
+#         return Response({
+#             "message": f"Remittance {action}d successfully",
+#             "remittance": {
+#                 "reference": remit.remittance_id,
+#                 "vendor": remit.vendor.email,
+#                 "amount": remit.amount,
+#                 "status": remit.status,
+#                 "confirmed_by": remit.confirmed_by.email if remit.confirmed_by else None,
+#                 "confirmed_at": remit.confirmed_at
+#             }
+#         })
 
 
-class BeneficiaryListCreateView(generics.ListCreateAPIView):
-    serializer_class = VendorBeneficiarySerializer
+# class BeneficiaryListCreateView(generics.ListCreateAPIView):
+#     serializer_class = VendorBeneficiarySerializer
+#     permission_classes = [IsPartner]
+
+#     def get_queryset(self):
+#         return VendorasBeneficiary.objects.filter(partner=self.request.user)
+
+#     def perform_create(self, serializer):
+#         serializer.save(partner=self.request.user)
+
+class VendorBeneficiaryView(APIView):
     permission_classes = [IsPartner]
 
-    def get_queryset(self):
-        return VendorasBeneficiary.objects.filter(partner=self.request.user)
+    def post(self, request):
+        partner = request.user
+        vendor_id = request.data.get("vendor_id")
 
-    def perform_create(self, serializer):
-        serializer.save(partner=self.request.user)
+        if not vendor_id:
+            return Response({"error": "vendor_id is required"}, status=400)
 
+        try:
+            vendor = Vendor.objects.get(vendor_id=vendor_id)
+        except Vendor.DoesNotExist:
+            return Response({"error": "Vendor not found"}, status=404)
+
+        # Prevent duplicate
+        beneficiary, created = VendorasBeneficiary.objects.get_or_create(
+            partner=partner,
+            vendor=vendor
+        )
+
+        if not created:
+            return Response(
+                {"message": "Vendor already saved as beneficiary"},
+                status=200
+            )
+
+        return Response(
+            {
+                "message": "Vendor saved as beneficiary",
+                "beneficiary": {
+                    "id": beneficiary.id,
+                    "vendor": vendor.store_name,
+                    "vendor_id": vendor.vendor_id
+                }
+            },
+            status=201
+        )
+
+    def get(self, request):
+        partner = request.user
+        beneficiaries = VendorasBeneficiary.objects.filter(partner=partner)
+        data = [
+            {
+                "id": b.id,
+                "vendor_id": b.vendor.id,
+                "vendor_name": b.vendor.store_name,
+                "vendor_email": b.vendor.store_email,
+                "vendor_phone": b.vendor.store_phone,
+            }
+            for b in beneficiaries
+        ]
+        return Response(data, status=200)
 
 class BeneficiaryDeleteView(generics.DestroyAPIView):
     serializer_class = VendorBeneficiarySerializer
