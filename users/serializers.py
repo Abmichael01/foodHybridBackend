@@ -986,7 +986,7 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
         model = Vendor
         fields = [
             "id", "store_name", "store_email", "store_phone",
-            "store_address", "user_email", "user_name", 'name'
+            "store_address", "user_email", "user_name", 'name',
             "investments", "deliveries", "transactions"
         ]
     
