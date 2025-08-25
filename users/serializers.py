@@ -98,14 +98,15 @@ class DeliveryConfirmationCreateSerializer(serializers.Serializer):
         otp = delivery.generate_otp()
 
         # Save OTP in EmailOTP
-        vendor_user = investment.vendor.user
-        EmailOTP.objects.create(user=vendor_user, otp=otp)
+        user = investment.vendor.user
+        EmailOTP.objects.create(user, otp=otp)
 
         # Send email
-        vendor_email = vendor_user.email or investment.vendor.store_email
+        vendor_email = user.email or investment.vendor.store_email
         # from utils.email import send_email  # adjust import
+        
         send_email(
-            vendor_user,
+            user,
             "Delivery OTP Code",
             "Your OTP Code",
             extra_context={"code": otp}
