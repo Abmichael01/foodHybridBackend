@@ -756,7 +756,7 @@ class VendorDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ['vendor_id', 'name', 'email', 'store_name', 'store_email', 'store_phone', 'store_address', 'profile_picture', 'created_at', 'recent_orders']
+        fields = ['vendor_id', 'name', 'email', 'username', 'store_name', 'store_email', 'store_phone', 'store_address', 'profile_picture', 'created_at', 'recent_orders']
 
     def get_recent_orders(self, obj):
         limit = self.context.get('order_limit', 10)  # Default if not provided
