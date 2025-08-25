@@ -301,9 +301,9 @@ class ROIOrderBreakdownSerializer(serializers.ModelSerializer):
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.SerializerMethodField()
+    vendor_name = serializers.SerializerMethodField()
     partner_profile_picture = serializers.SerializerMethodField()
-    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
-    vendor_profile_picture = serializers.ImageField(source='vendor.profile_picture', read_only=True)
+    vendor_profile_picture = serializers.SerializerMethodField()
     vendor_address = serializers.CharField(source='vendor.address', read_only=True)
     product = serializers.SerializerMethodField()
     roi_cycles = serializers.SerializerMethodField()
@@ -319,8 +319,17 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     def get_partner_name(self, obj):
         return obj.partner.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
 
+    def get_vendor_name(self, obj):
+        return obj.vendor.user.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
+
+
     def get_partner_profile_picture(self, obj):
         return obj.partner.profile_picture.url if obj.partner and obj.partner.profile_picture else None
+    
+    
+    def get_vendor_profile_picture(self, obj):
+        return obj.vendor.user.profile_picture.url if obj.partner and obj.partner.profile_picture else None
+
 
     def get_product(self, obj):
         return [p.name for p in obj.product.all()]
