@@ -973,7 +973,7 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
     deliveries = OrderDeliveryConfirmationSerializer(
         many=True, source="orderdeliveryconfirmation_set"
     )
-    transactions = TransactionSerializer(many=True, source="transactions")
+    transactions = TransactionSerializer(many=True)
 
     class Meta:
         model = Vendor
