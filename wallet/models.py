@@ -1,11 +1,12 @@
 # wallet/models.py
-from datetime import timezone
+from datetime import timezone, timedelta
 import random
 import uuid
 from django.conf import settings
 from django.db import models
 from users.models import Users
 from shop.models import Product, Vendor
+from django.utils.timezone import now
 
 class Wallet(models.Model):
     user = models.OneToOneField(Users, on_delete=models.CASCADE, related_name='wallet')
@@ -96,7 +97,7 @@ class Remittance(models.Model):
     def generate_otp(self):
         otp_code = str(random.randint(1000, 9999))  # 4-digit OTP
         self.otp = otp_code
-        self.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
+        self.otp_expires_at = now() + timedelta(minutes=5)
         self.save()
         return otp_code
     

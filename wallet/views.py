@@ -483,8 +483,9 @@ class VendorRemitView(APIView):
             return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         remittance_ref = generate_remmittance_reference()
+        vendor = Vendor.objects.get(user=request.user)
         remit = Remittance.objects.create(
-            vendor=user,
+            vendor=vendor,
             amount=amount,
             remittance_id=remittance_ref,
             status="pending"
@@ -492,10 +493,12 @@ class VendorRemitView(APIView):
 
         # Generate OTP
         otp = remit.generate_otp()
+        user = vendor.user
 
         # TODO: Send OTP via email/SMS (pseudo)
         # send_sms(user.phone, f"Your remittance OTP is {otp}")
         send_email(user, "code", "Your OTP Code", extra_context={"code": otp})
+        print(otp)
 
         return Response({
             "message": "Remittance initiated. Please confirm with OTP.",
@@ -515,17 +518,19 @@ class ConfirmRemittanceView(APIView):
         otp = request.data.get("otp")
 
         try:
-            remit = Remittance.objects.get(remittance_id=reference, vendor=request.user)
+            vendor = Vendor.objects.get(user=request.user)
+            remit = Remittance.objects.get(remittance_id=reference, vendor=vendor)
         except Remittance.DoesNotExist:
             return Response({"error": "Invalid remittance reference"}, status=status.HTTP_404_NOT_FOUND)
 
         if remit.status != "pending":
             return Response({"error": "Remittance already processed"}, status=status.HTTP_400_BAD_REQUEST)
+        
 
-        if not remit.otp or remit.otp != otp:
+        if not remit.otp or int(remit.otp) != otp:
             return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if remit.otp_expires_at < timezone.now():
+        if remit.otp_expires_at < now():
             return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
 
         # ✅ Mark remittance as completed

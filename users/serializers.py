@@ -960,10 +960,10 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
         ]
 
 
-class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderDeliveryConfirmation
-        fields = ["id", "investment", "otp", "is_confirmed", "created_at"]
+# class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OrderDeliveryConfirmation
+#         fields = ["id", "investment", "otp", "is_confirmed", "created_at"]
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -974,7 +974,8 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class VendorDashboardSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
-    name = serializers.CharField(source="user.get_full_name", read_only=True)
+    user_name = serializers.CharField(source="user.username", read_only=True)
+    name = serializers.SerializerMethodField()
     investments = PartnerInvestmentSerializer(many=True, read_only=True)
     deliveries = OrderDeliveryConfirmationSerializer(
         many=True, read_only=True
@@ -985,7 +986,7 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
         model = Vendor
         fields = [
             "id", "store_name", "store_email", "store_phone",
-            "store_address", "user_email", "user_name",
+            "store_address", "user_email", "user_name", 'name'
             "investments", "deliveries", "transactions"
         ]
     
