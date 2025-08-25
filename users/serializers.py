@@ -137,7 +137,7 @@ class VendorSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source="user.phone_number", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
-    profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
+    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Vendor
@@ -153,6 +153,9 @@ class VendorSerializer(serializers.ModelSerializer):
         if hasattr(self.Meta, "extra_fields"):
             return expanded_fields + self.Meta.extra_fields
         return expanded_fields
+    
+    def get_profile_picture(self, obj):
+        return obj.user.profile_picture.url if obj.user and obj.user.profile_picture else None
 
 class VendorSignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
@@ -564,6 +567,7 @@ class PartnerAdminReportSerializer(serializers.Serializer):
     total_orders = serializers.SerializerMethodField()
     balance = serializers.SerializerMethodField()
     portfolio_balance = serializers.SerializerMethodField()
+    partner_profile_picture = serializers.ImageField(source='profile_picture', read_only=True)
 
     def get_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
@@ -653,7 +657,8 @@ class VendorDetailSerializer(serializers.ModelSerializer):
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
-    name = serializers.CharField(source="user.first_name", read_only=True) 
+    name = serializers.SerializerMethodField()
+    profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True) 
     total_remittance = serializers.SerializerMethodField()
     today_remittance = serializers.SerializerMethodField()
     # total_orders = serializers.SerializerMethodField()
@@ -662,7 +667,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id','vendor_id', 'name', 'email', 'store_phone', 'store_address',
-                  'store_email', 'store_name','total_remittance', 'today_remittance']
+                  'store_email', 'store_name','total_remittance', 'today_remittance', 'profile_picture']
 
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
@@ -682,6 +687,8 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
         return PartnerInvestment.objects.filter(
             vendor=vendor
         ).values('id', 'amount_invested', 'status', 'created_at', 'partner__email', 'vendor__name')
+    def get_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip()
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Notification
