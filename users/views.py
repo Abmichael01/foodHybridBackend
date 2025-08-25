@@ -324,8 +324,8 @@ class AdminCreateVendorView(APIView):
     def post(self, request):
         serializer = VendorSignupSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"detail": "Vendor created successfully", "data": serializer.data}, status=201)
+            vendor = serializer.save()
+            return Response({"detail": "Vendor created successfully", "data": VendorSignupSerializer(vendor).data}, status=201)
         return Response(serializer.errors, status=400)
 
 class VendorCreateView(APIView):

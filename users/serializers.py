@@ -213,6 +213,7 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
         if profile_picture:
+            print("profile pic set")
             user.profile_picture = profile_picture
         user.user_type = "vendor"
         user.save()
