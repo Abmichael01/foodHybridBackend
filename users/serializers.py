@@ -206,6 +206,7 @@ class VendorSignupSerializer(serializers.ModelSerializer):
                 "last_name": last_name,
             }
         )
+        print('profile pic', profile_picture)
 
         # update fields if user already existed
         user.first_name = first_name or user.first_name
