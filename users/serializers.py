@@ -352,7 +352,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
         return obj.partner.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.partner)
 
     def get_vendor_name(self, obj):
-        return obj.vendor.user.get_full_name() if hasattr(obj.partner, 'get_full_name') else str(obj.vendor.user)
+        return obj.vendor.user.get_full_name() if hasattr(obj.vendor, 'get_full_name') else str(obj.vendor.user)
 
 
     def get_partner_profile_picture(self, obj):
@@ -687,8 +687,9 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
         return PartnerInvestment.objects.filter(
             vendor=vendor
         ).values('id', 'amount_invested', 'status', 'created_at', 'partner__email', 'vendor__name')
+    
     def get_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return obj.vendor.user.get_full_name() if hasattr(obj.vendor, 'get_full_name') else str(obj.vendor.user)
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Notification
