@@ -125,7 +125,7 @@ class OrderDeliveryConfirmation(models.Model):
     def generate_otp(self):
         import random
         from django.utils import timezone
-        otp = f"{random.randint(100000, 999999)}"
+        otp = f"{random.randint(1000, 9999)}"
         self.otp = otp
         self.otp_sent_at = timezone.now()
         self.save()
