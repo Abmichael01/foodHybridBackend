@@ -1643,7 +1643,7 @@ class PartnerDetailWithInvestmentsView(APIView):
             orders_list.append({
                 "order_id": inv.order_id,
                 "created_at": inv.created_at,
-                "vendor_name": inv.vendor.name if inv.vendor else None,
+                "vendor_name": inv.vendor.user.get_full_name() if inv.vendor else None,
                 "partner_name":partner.get_full_name(),
                 "amount": inv.amount_invested,
                 "status": inv.status,
@@ -1951,7 +1951,7 @@ class AdminROICycleBreakdownView(APIView):
             orders_data.append({
                 "order_id": inv.order_id,
                 "partner_name": inv.partner.get_full_name() if inv.partner else None,
-                "vendor_name": inv.vendor.name if inv.vendor else None,
+                "vendor_name": inv.vendor.user.get_full_name() if inv.vendor else None,
                 "products": [p.name for p in inv.product.all()],
                 "amount_invested": inv.amount_invested,
                 "total_roi": inv.total_roi(),

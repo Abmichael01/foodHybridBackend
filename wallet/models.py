@@ -1,4 +1,5 @@
 # wallet/models.py
+from django.conf import settings
 from django.db import models
 from users.models import Users
 from shop.models import Product
@@ -87,3 +88,18 @@ class Remittance(models.Model):
 
     def __str__(self):
         return f"{self.vendor.email} - {self.amount} ({self.status})"
+    
+
+class VendorasBeneficiary(models.Model):
+    partner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="beneficiaries"
+    )
+    vendor = models.ForeignKey("Vendor", on_delete=models.CASCADE, related_name="beneficiaries")
+    alias = models.CharField(max_length=100, blank=True, null=True)  # optional nickname
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("partner", "vendor")  # prevent duplicates
+
+    def __str__(self):
+        return f"{self.partner.username} -> {self.vendor.store_name}"
