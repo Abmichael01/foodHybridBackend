@@ -949,8 +949,9 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PartnerInvestment
         fields = [
-            "id", "order_id", "amount", "status",
-            "total_roi", "roi_collected", "pending_roi", "created_at"
+            "id", "order_id", "amount_invested", "status",
+            # "total_roi",
+              "roi_paid", "roi_rate", "created_at"
         ]
 
 
@@ -969,9 +970,9 @@ class TransactionSerializer(serializers.ModelSerializer):
 class VendorDashboardSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
     user_name = serializers.CharField(source="user.get_full_name", read_only=True)
-    investments = PartnerInvestmentSerializer(many=True, source="partnerinvestment_set")
+    investments = PartnerInvestmentSerializer(many=True, read_only=True)
     deliveries = OrderDeliveryConfirmationSerializer(
-        many=True, source="orderdeliveryconfirmation_set"
+        many=True, read_only=True
     )
     transactions = TransactionSerializer(many=True)
 

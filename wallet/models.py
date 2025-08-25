@@ -39,7 +39,11 @@ class Transaction(models.Model):
         ('completed', 'Completed'),
         # Add more as needed
     )
-
+    vendor = models.ForeignKey(Vendor,
+        on_delete=models.CASCADE,
+        related_name="transactions",   # ✅ important
+        null=True, blank=True
+    )
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='transactions')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     available_balance_at_time = models.DecimalField(max_digits=12, decimal_places=2, default=0)
