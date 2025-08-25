@@ -287,7 +287,7 @@ class CreateAndSendDeliveryOTPView(APIView):
         return Response({"detail": "OTP sent to vendor"}, status=201)
 
 
-class VerifyDeliveryOTPView(APIView):
+class ConfirmDeliveryView(APIView):
     def post(self, request):
         serializer = OrderDeliveryConfirmationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
