@@ -252,68 +252,82 @@ class VendorListView(ListAPIView):
 #         return Response({"detail": "Delivery created and OTP sent"}, status=201)
 
 
+# class CreateAndSendDeliveryOTPView(APIView):
+#     def post(self, request):
+#         serializer = DeliveryConfirmationCreateSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+
+#         # Save and generate OTP
+#         delivery = serializer.save()
+#         investment = delivery.investment   # ✅ investment comes from delivery
+#         otp = delivery.generate_otp()
+        
+#         # 🔑 Get the vendor related to this investment
+#         vendor = investment.vendor   # ✅ already FK
+#         vendor_email = vendor.email
+#         vendor_email = vendor_email or vendor.store_email
+
+#         # Save OTP
+#         EmailOTP.objects.create(user=vendor, otp=otp)
+
+#         # Send email
+#         send_email(
+#             vendor_email,
+#             "Delivery OTP Code",
+#             "Your OTP Code",
+#             extra_context={"code": otp}
+#         )
+
+#         return Response({"detail": "Delivery created and OTP sent"}, status=201)
 class CreateAndSendDeliveryOTPView(APIView):
     def post(self, request):
         serializer = DeliveryConfirmationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "OTP sent to vendor"}, status=201)
 
-        # Save and generate OTP
-        delivery = serializer.save()
-        investment = delivery.investment   # ✅ investment comes from delivery
-        otp = delivery.generate_otp()
-        
-        # 🔑 Get the vendor related to this investment
-        vendor = investment.vendor   # ✅ already FK
-        vendor_email = vendor.email
-        vendor_email = vendor_email or vendor.store_email
 
-        # Save OTP
-        EmailOTP.objects.create(user=vendor, otp=otp)
-
-        # Send email
-        send_email(
-            vendor_email,
-            "Delivery OTP Code",
-            "Your OTP Code",
-            extra_context={"code": otp}
-        )
-
-        return Response({"detail": "Delivery created and OTP sent"}, status=201)
-
-class ConfirmDeliveryView(APIView):
+class VerifyDeliveryOTPView(APIView):
     def post(self, request):
-        investment_id = request.data.get("investment_id")
-        otp = request.data.get("otp")
+        serializer = OrderDeliveryConfirmationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Delivery confirmed and marked as completed"}, status=200)
 
-        try:
-            delivery = OrderDeliveryConfirmation.objects.get(investment_id=investment_id)
-        except OrderDeliveryConfirmation.DoesNotExist:
-            return Response({"detail": "No delivery record found"}, status=404)
+# class ConfirmDeliveryView(APIView):
+#     def post(self, request):
+#         investment_id = request.data.get("investment_id")
+#         otp = request.data.get("otp")
 
-        if delivery.is_confirmed:
-            return Response({"detail": "Delivery already confirmed"}, status=400)
+#         try:
+#             delivery = OrderDeliveryConfirmation.objects.get(investment_id=investment_id)
+#         except OrderDeliveryConfirmation.DoesNotExist:
+#             return Response({"detail": "No delivery record found"}, status=404)
 
-        if delivery.confirm_delivery(otp): 
-            partner = delivery.investment.partner 
-            Notification.objects.create(
-                user=partner.user,
-                title="Order Delivered",
-                message=f"Order {investment_id} successfully delivered to the vendor.",
-                event_type="order",
-            )
-            admins = Users.objects.filter(is_superuser=True)  # Or use is_staff/group filter
-            for admin in admins:
-                Notification.objects.create(
-                    user=admin,
-                    title="Order Delivered",
-                    message=f"Order {investment_id} successfully delivered to the vendor.",
-                    event_type="admin",
-                    from_user=request.user.username if request.user else "system",
-                    to_user=admin.username
-                )
-            send_email(partner.user,"order_delivered", "Order {investment_id} successfully delivered!")
-            return Response({"detail": "Delivery confirmed successfully"}, status=200)
-        return Response({"detail": "Invalid OTP"}, status=400)
+#         if delivery.is_confirmed:
+#             return Response({"detail": "Delivery already confirmed"}, status=400)
+
+#         if delivery.confirm_delivery(otp): 
+#             partner = delivery.investment.partner 
+#             Notification.objects.create(
+#                 user=partner.user,
+#                 title="Order Delivered",
+#                 message=f"Order {investment_id} successfully delivered to the vendor.",
+#                 event_type="order",
+#             )
+#             admins = Users.objects.filter(is_superuser=True)  # Or use is_staff/group filter
+#             for admin in admins:
+#                 Notification.objects.create(
+#                     user=admin,
+#                     title="Order Delivered",
+#                     message=f"Order {investment_id} successfully delivered to the vendor.",
+#                     event_type="admin",
+#                     from_user=request.user.username if request.user else "system",
+#                     to_user=admin.username
+#                 )
+#             send_email(partner.user,"order_delivered", "Order {investment_id} successfully delivered!")
+#             return Response({"detail": "Delivery confirmed successfully"}, status=200)
+#         return Response({"detail": "Invalid OTP"}, status=400)
     
 
 

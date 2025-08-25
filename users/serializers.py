@@ -67,15 +67,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
 #             'store_phone',
 #             'store_address'
 #         ]
-
 class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
     order_id = serializers.CharField(write_only=True)
 
     class Meta:
         model = PartnerInvestment
-        fields = [
-            'order_id'
-        ]
+        fields = ['order_id']
 
     def create(self, validated_data):
         order_id = validated_data.pop('order_id')
@@ -84,36 +81,92 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
         except PartnerInvestment.DoesNotExist:
             raise serializers.ValidationError({"order_id": "Invalid order ID"})
 
-        # One-to-one means only one confirmation per investment
+        # Ensure only one confirmation per order
         if hasattr(investment, "delivery_confirmation"):
-            raise serializers.ValidationError({"order_id": "Delivery confirmation already exists for this order"})
+            raise serializers.ValidationError({"order_id": "Delivery confirmation already exists"})
 
-        return OrderDeliveryConfirmation.objects.create(
-            investment=investment,
-            **validated_data
+        # Create delivery confirmation
+        delivery = OrderDeliveryConfirmation.objects.create(investment=investment)
+
+        # Generate OTP
+        otp = delivery.generate_otp()
+
+        # Send OTP to vendor
+        vendor = investment.vendor
+        vendor_email = vendor.email if hasattr(vendor, "email") else vendor.user.email
+        EmailOTP.objects.create(user=vendor, otp=otp)
+
+        from utils.email import send_email   # adjust path
+        send_email(
+            vendor_email,
+            "Delivery OTP Code",
+            "Your OTP Code",
+            extra_context={"code": otp}
         )
 
-class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
-    investment_order_id = serializers.CharField(source="investment.order_id", read_only=True)
-    investment_status = serializers.CharField(source="investment.status", read_only=True)
+        return delivery
+    
+class OrderDeliveryConfirmationSerializer(serializers.Serializer):
+    order_id = serializers.CharField()
+    otp = serializers.CharField(max_length=6)
 
-    class Meta:
-        model = OrderDeliveryConfirmation
-        fields = [
-            "id",
-            "investment_order_id",
-            "investment_status",
-            "owner_name",
-            "owner_email",
-            "store_name",
-            "store_email",
-            "store_phone",
-            "store_address",
-            "is_confirmed",
-            "confirmed_at",
-            "otp_sent_at",
-            "created_at",
-        ]
+    def validate(self, attrs):
+        order_id = attrs.get("order_id")
+        otp = attrs.get("otp")
+
+        try:
+            investment = PartnerInvestment.objects.get(order_id=order_id)
+        except PartnerInvestment.DoesNotExist:
+            raise serializers.ValidationError({"order_id": "Invalid order ID"})
+
+        try:
+            delivery = investment.delivery_confirmation
+        except OrderDeliveryConfirmation.DoesNotExist:
+            raise serializers.ValidationError({"order_id": "No delivery confirmation found for this order"})
+
+        # Check OTP
+        if not EmailOTP.objects.filter(user=investment.vendor, otp=otp).exists():
+            raise serializers.ValidationError({"otp": "Invalid OTP"})
+
+        attrs["investment"] = investment
+        attrs["delivery"] = delivery
+        return attrs
+
+    def save(self, **kwargs):
+        investment = self.validated_data["investment"]
+        delivery = self.validated_data["delivery"]
+
+        # Mark delivery + investment as completed
+        delivery.status = "completed"
+        delivery.save()
+
+        investment.status = "completed"
+        investment.save()
+
+        return delivery
+
+
+# class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
+#     investment_order_id = serializers.CharField(source="investment.order_id", read_only=True)
+#     investment_status = serializers.CharField(source="investment.status", read_only=True)
+
+#     class Meta:
+#         model = OrderDeliveryConfirmation
+#         fields = [
+#             "id",
+#             "investment_order_id",
+#             "investment_status",
+#             "owner_name",
+#             "owner_email",
+#             "store_name",
+#             "store_email",
+#             "store_phone",
+#             "store_address",
+#             "is_confirmed",
+#             "confirmed_at",
+#             "otp_sent_at",
+#             "created_at",
+#         ]
 
 # class VendorSerializer(serializers.ModelSerializer):
 #     class Meta:
