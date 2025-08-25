@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.db import models
 from users.models import Users
-from shop.models import Product
+from shop.models import Product, Vendor
 
 class Wallet(models.Model):
     user = models.OneToOneField(Users, on_delete=models.CASCADE, related_name='wallet')
@@ -92,9 +92,9 @@ class Remittance(models.Model):
 
 class VendorasBeneficiary(models.Model):
     partner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="beneficiaries"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendor_beneficiaries"
     )
-    vendor = models.ForeignKey("Vendor", on_delete=models.CASCADE, related_name="beneficiaries")
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="saved_as_beneficiaries")
     alias = models.CharField(max_length=100, blank=True, null=True)  # optional nickname
     created_at = models.DateTimeField(auto_now_add=True)
 

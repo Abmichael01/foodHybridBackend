@@ -3,7 +3,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from users.models import Notification, Users
 from .models import Remittance, Wallet, Transaction, Beneficiary
 from shop.models import PartnerInvestment
@@ -510,19 +510,24 @@ class AdminConfirmRemittanceView(APIView):
             }
         })
 
-class Beneficiary(models.Model):
-    partner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="beneficiaries"
-    )
-    vendor = models.ForeignKey("Vendor", on_delete=models.CASCADE, related_name="beneficiaries")
-    alias = models.CharField(max_length=100, blank=True, null=True)  # optional nickname
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ("partner", "vendor")  # prevent duplicates
+class BeneficiaryListCreateView(generics.ListCreateAPIView):
+    serializer_class = BeneficiarySerializer
+    permission_classes = [IsPartner]
 
-    def __str__(self):
-        return f"{self.partner.username} -> {self.vendor.store_name}"
+    def get_queryset(self):
+        return Beneficiary.objects.filter(partner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(partner=self.request.user)
+
+
+class BeneficiaryDeleteView(generics.DestroyAPIView):
+    serializer_class = BeneficiarySerializer
+    permission_classes = [IsPartner]
+
+    def get_queryset(self):
+        return Beneficiary.objects.filter(partner=self.request.user)
 
 
 # --------STRIPE WEBHOOK.PY--------
