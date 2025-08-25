@@ -750,7 +750,7 @@ class VendorOrderSerializer(serializers.ModelSerializer):
 class VendorDetailSerializer(serializers.ModelSerializer):
     recent_orders = serializers.SerializerMethodField()
     email = serializers.EmailField(source="user.email", read_only=True)
-    name = serializers.CharField(source="user.first_name", read_only=True) 
+    name = serializers.SerializerMethodField()
     username = serializers.CharField(source="user.username", read_only=True)
     profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
 
@@ -762,6 +762,9 @@ class VendorDetailSerializer(serializers.ModelSerializer):
         limit = self.context.get('order_limit', 10)  # Default if not provided
         orders = obj.orders.all().order_by('-created_at')[:limit]
         return VendorOrderSerializer(orders, many=True).data
+    
+    def get_name(self, obj):
+        return obj.user.get_full_name() if hasattr(obj.user, 'get_full_name') else str(obj.user)
 
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
@@ -960,7 +963,7 @@ class PartnerInvestmentSerializer(serializers.ModelSerializer):
 class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderDeliveryConfirmation
-        fields = ["id", "investment", "otp", "verified", "created_at"]
+        fields = ["id", "investment", "otp", "is_confirmed", "created_at"]
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -971,7 +974,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class VendorDashboardSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
-    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    name = serializers.CharField(source="user.get_full_name", read_only=True)
     investments = PartnerInvestmentSerializer(many=True, read_only=True)
     deliveries = OrderDeliveryConfirmationSerializer(
         many=True, read_only=True
@@ -985,3 +988,6 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
             "store_address", "user_email", "user_name",
             "investments", "deliveries", "transactions"
         ]
+    
+    def get_name(self, obj):
+        return obj.user.get_full_name() if hasattr(obj.user, 'get_full_name') else str(obj.user)
