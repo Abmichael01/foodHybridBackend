@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+import threading
 
 def send_notification(user, title, message):
     # Save the notification in the database
@@ -55,7 +56,8 @@ def send_email(user, type, subject, extra_context=None):
         to=[user.email],
     )
     email.content_subtype = "html"
-    email.send()
+    email.send(fail_silently=True)
+# threading.Thread(target=_send).start()
 
 def send_fh_email(user, subject, message, code=None, action_url=None, action_text=None):
     html_content = render_to_string('base_template.html', {
