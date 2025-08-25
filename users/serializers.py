@@ -72,7 +72,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 # from .models import PartnerInvestment, OrderDeliveryConfirmation, EmailOTP
 
 
-class DeliveryOTPRequestSerializer(serializers.Serializer):
+class DeliveryConfirmationCreateSerializer(serializers.Serializer):
     order_id = serializers.CharField()
 
     def validate_order_id(self, value):
@@ -114,7 +114,7 @@ class DeliveryOTPRequestSerializer(serializers.Serializer):
         return delivery
 
 
-class DeliveryOTPVerifySerializer(serializers.Serializer):
+class OrderDeliveryConfirmationSerializer(serializers.Serializer):
     order_id = serializers.CharField()
     otp = serializers.CharField(max_length=6)
 
@@ -588,10 +588,10 @@ class RequestPasswordResetOTPSerializer(serializers.Serializer):
     #     user = Users.objects.get(email=email)
 
      
-class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderDeliveryConfirmation
-        fields = ['order_id', 'owner_name', 'owner_email', 'store_address']
+# class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OrderDeliveryConfirmation
+#         fields = ['order_id', 'owner_name', 'owner_email', 'store_address']
 
 class ROIPayoutSerializer(serializers.ModelSerializer):
     class Meta:
