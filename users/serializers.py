@@ -322,6 +322,7 @@ class VendorSignupSerializer(serializers.ModelSerializer):
             print("profile pic set")
             user.profile_picture = profile_picture
         user.user_type = "vendor"
+        user.is_email_verified = True
         user.save()
 
         # link/create vendor
