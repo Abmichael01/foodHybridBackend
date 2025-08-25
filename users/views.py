@@ -292,7 +292,7 @@ class ConfirmDeliveryView(APIView):
         serializer = OrderDeliveryConfirmationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "Delivery confirmed and marked as completed"}, status=200)
+        return Response({"detail": "Delivery has been delivered"}, status=200)
 
 # class ConfirmDeliveryView(APIView):
 #     def post(self, request):
@@ -1006,38 +1006,38 @@ class PartnerDetailsView(APIView):
 #            request.session.pop('email', None)
 #            return Response({'detail': 'Your withdrawal PIN has been successfully reset.'}, status=status.HTTP_200_OK)
 
-class CreateDeliveryConfirmationView(APIView):
-    def post(self, request):
-        serializer = OrderDeliveryConfirmationSerializer(data=request.data)
-        email = request.data.get("email")
-        if serializer.is_valid():
-            serializer.save()
-            otp = generate_otp()
-            send_email(email,"code","Your OTP Code", extra_context={
-                        "code":otp}) 
-            return Response({'detail': 'OTP sent to vendor email.'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class CreateDeliveryConfirmationView(APIView):
+#     def post(self, request):
+#         serializer = OrderDeliveryConfirmationSerializer(data=request.data)
+#         email = request.data.get("email")
+#         if serializer.is_valid():
+#             serializer.save()
+#             otp = generate_otp()
+#             send_email(email,"code","Your OTP Code", extra_context={
+#                         "code":otp}) 
+#             return Response({'detail': 'OTP sent to vendor email.'}, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class ConfirmDeliveryOTPView(APIView):
-    def post(self, request):
-        order_id = request.data.get('order_id')
-        otp = request.data.get('otp')
+# class ConfirmDeliveryOTPView(APIView):
+#     def post(self, request):
+#         order_id = request.data.get('order_id')
+#         otp = request.data.get('otp')
 
-        try:
-            confirmation = OrderDeliveryConfirmation.objects.get(order_id=order_id)
-        except OrderDeliveryConfirmation.DoesNotExist:
-            return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+#         try:
+#             confirmation = OrderDeliveryConfirmation.objects.get(order_id=order_id)
+#         except OrderDeliveryConfirmation.DoesNotExist:
+#             return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if confirmation.is_confirmed:
-            return Response({'detail': 'Order already confirmed.'}, status=status.HTTP_400_BAD_REQUEST)
+#         if confirmation.is_confirmed:
+#             return Response({'detail': 'Order already confirmed.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if confirmation.otp != otp:
-            return Response({'detail': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+#         if confirmation.otp != otp:
+#             return Response({'detail': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        confirmation.is_confirmed = True
-        confirmation.confirmed_at = timezone.now()
-        confirmation.save()
-        return Response({'detail': 'Order delivery confirmed.'}, status=status.HTTP_200_OK)
+#         confirmation.is_confirmed = True
+#         confirmation.confirmed_at = timezone.now()
+#         confirmation.save()
+#         return Response({'detail': 'Order delivery confirmed.'}, status=status.HTTP_200_OK)
 
 
 class UpdateProfileView(APIView):

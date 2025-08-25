@@ -104,10 +104,10 @@ class DeliveryConfirmationCreateSerializer(serializers.Serializer):
         # Send email
         vendor_email = user.email or investment.vendor.store_email
         # from utils.email import send_email  # adjust import
-        
+        print({user, otp})
         send_email(
             user,
-            "Delivery OTP Code",
+            "code",
             "Your OTP Code",
             extra_context={"code": otp}
         )
@@ -141,7 +141,7 @@ class OrderDeliveryConfirmationSerializer(serializers.Serializer):
         investment = self.validated_data["investment"]
 
         # update status
-        investment.status = "completed"
+        investment.status = "delivered"
         investment.save()
 
         return investment
@@ -728,7 +728,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
         vendor=vendor
-        ).aggregate(total=Sum('amount_invested'))['total'] or 0
+        ).aggregate(total=Sum('roi_paid'))['total'] or 0
 
     def get_today_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
