@@ -219,6 +219,7 @@ class VendorSignupSerializer(serializers.ModelSerializer):
             user=user,
             defaults=validated_data
         )
+        return vendor
    # Find existing user
         # try:
         #     user = Users.objects.get(email=email)
