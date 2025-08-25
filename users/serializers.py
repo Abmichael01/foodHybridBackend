@@ -71,97 +71,98 @@ class OrderItemSerializer(serializers.ModelSerializer):
 # from rest_framework import serializers
 # from .models import PartnerInvestment, OrderDeliveryConfirmation, EmailOTP
 
-class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
-    order_id = serializers.CharField(write_only=True)
+# class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
+#     order_id = serializers.CharField(write_only=True)
 
-    class Meta:
-        model = OrderDeliveryConfirmation
-        fields = ['order_id']
+#     class Meta:
+#         model = OrderDeliveryConfirmation
+#         fields = ['order_id']
 
-    def create(self, validated_data):
-        order_id = validated_data.pop('order_id')
+#     def create(self, validated_data):
+#         order_id = validated_data.pop('order_id')
 
-        # ✅ Find the investment
-        try:
-            investment = PartnerInvestment.objects.get(order_id=order_id)
-        except PartnerInvestment.DoesNotExist:
-            raise serializers.ValidationError({"order_id": "Invalid order ID"})
-
-        # ✅ Block if already completed
-        if investment.status == "completed":
-            raise serializers.ValidationError({"order_id": "This order is already completed"})
-
-        # ✅ Either get existing confirmation or create a new one
-        confirmation, created = OrderDeliveryConfirmation.objects.get_or_create(
-            investment=investment,
-            defaults=validated_data
-        )
-
-        # ✅ Always (re)generate OTP
-        import random
-        otp = str(random.randint(100000, 999999))
-        confirmation.otp_code = otp
-        confirmation.is_verified = False
-        confirmation.save()
-
-        # ✅ Send OTP to vendor (email/phone)
-        vendor = investment.vendor
-        if vendor.store_email:
-            from django.core.mail import send_mail
-            send_mail(
-                "Your Delivery OTP",
-                f"Your OTP for confirming delivery of order {investment.order_id} is {otp}",
-                "no-reply@yourdomain.com",
-                [vendor.store_email],
-                fail_silently=True,
-            )
-
-        return confirmation
-
-# class DeliveryConfirmationCreateSerializer(serializers.Serializer):
-#     order_id = serializers.CharField()
-
-#     def validate_order_id(self, value):
+#         # ✅ Find the investment
 #         try:
-#             investment = PartnerInvestment.objects.get(order_id=value)
+#             investment = PartnerInvestment.objects.get(order_id=order_id)
 #         except PartnerInvestment.DoesNotExist:
-#             raise serializers.ValidationError("Invalid order ID")
+#             raise serializers.ValidationError({"order_id": "Invalid order ID"})
 
-#         # ensure not already delivered
+#         # ✅ Block if already completed
 #         if investment.status == "completed":
 #             raise serializers.ValidationError({"order_id": "This order is already completed"})
 
-#         return value
-
-#     def create(self, validated_data):
-#         order_id = validated_data["order_id"]
-#         investment = PartnerInvestment.objects.get(order_id=order_id)
-
-#         # Create delivery confirmation
-#         delivery = OrderDeliveryConfirmation.objects.create(investment=investment)
-
-#         if investment.status == "completed":
-#           raise serializers.ValidationError({"order_id": "This order is already completed"})
-
-#         # Generate OTP
-#         otp = delivery.generate_otp()
-
-#         # Save OTP in EmailOTP
-#         user = investment.vendor.user
-#         EmailOTP.objects.create(user=user, otp=otp)
-
-#         # Send email
-#         vendor_email = user.email or investment.vendor.store_email
-#         # from utils.email import send_email  # adjust import
-#         print({user, otp})
-#         send_email(
-#             user,
-#             "code",
-#             "Your OTP Code",
-#             extra_context={"code": otp}
+#         # ✅ Either get existing confirmation or create a new one
+#         confirmation, created = OrderDeliveryConfirmation.objects.get_or_create(
+#             investment=investment,
+#             defaults=validated_data
 #         )
 
-#         return delivery
+#         # ✅ Always (re)generate OTP
+#         import random
+#         otp = str(random.randint(100000, 999999))
+#         confirmation.otp_code = otp
+#         confirmation.is_verified = False
+#         confirmation.save()
+
+#         # ✅ Send OTP to vendor (email/phone)
+#         vendor = investment.vendor
+#         if vendor.store_email:
+#             from django.core.mail import send_mail
+#             send_mail(
+#                 "Your Delivery OTP",
+#                 f"Your OTP for confirming delivery of order {investment.order_id} is {otp}",
+#                 "no-reply@yourdomain.com",
+#                 [vendor.store_email],
+#                 fail_silently=True,
+#             )
+
+#         return confirmation
+
+class DeliveryConfirmationCreateSerializer(serializers.Serializer):
+    order_id = serializers.CharField()
+
+    def validate_order_id(self, value):
+        try:
+            investment = PartnerInvestment.objects.get(order_id=value)
+        except PartnerInvestment.DoesNotExist:
+            raise serializers.ValidationError("Invalid order ID")
+
+        # ensure not already delivered
+        if investment.status == "completed":
+            raise serializers.ValidationError("This order is already completed")
+
+        return value
+
+    def create(self, validated_data):
+        order_id = validated_data["order_id"]
+        investment = PartnerInvestment.objects.get(order_id=order_id)
+
+        # ✅ Either get existing confirmation or create new
+        delivery, created = OrderDeliveryConfirmation.objects.get_or_create(
+            investment=investment
+        )
+
+        # ✅ Generate a new OTP always
+        otp = delivery.generate_otp()
+
+        # If you want only the latest OTP valid, clear old ones for this user
+        EmailOTP.objects.filter(user=investment.vendor.user).delete()
+
+        # Save OTP in EmailOTP
+        user = investment.vendor.user
+        EmailOTP.objects.create(user=user, otp=otp)
+
+        # Send email
+        vendor_email = user.email or investment.vendor.store_email
+        print({"user": user.email, "otp": otp})
+        send_email(
+            user,
+            "code",
+            "Your OTP Code",
+            extra_context={"code": otp}
+        )
+
+        return delivery
 
 
 class OrderDeliveryConfirmationSerializer(serializers.Serializer):
