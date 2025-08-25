@@ -82,8 +82,8 @@ class DeliveryConfirmationCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid order ID")
 
         # ensure not already delivered
-        if hasattr(investment, "delivery_confirmation"):
-            raise serializers.ValidationError("Delivery already confirmed for this order")
+        if investment.status == "completed":
+            raise serializers.ValidationError({"order_id": "This order is already completed"})
 
         return value
 
