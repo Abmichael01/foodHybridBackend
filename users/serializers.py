@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.db import models
 from django.db.models import Sum
 from datetime import date
+from foodhybrid.utils import send_email
 
 
 
@@ -67,23 +68,28 @@ class OrderItemSerializer(serializers.ModelSerializer):
 #             'store_phone',
 #             'store_address'
 #         ]
-class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
-    order_id = serializers.CharField(write_only=True)
+# from rest_framework import serializers
+# from .models import PartnerInvestment, OrderDeliveryConfirmation, EmailOTP
 
-    class Meta:
-        model = PartnerInvestment
-        fields = ['order_id']
+
+class DeliveryOTPRequestSerializer(serializers.Serializer):
+    order_id = serializers.CharField()
+
+    def validate_order_id(self, value):
+        try:
+            investment = PartnerInvestment.objects.get(order_id=value)
+        except PartnerInvestment.DoesNotExist:
+            raise serializers.ValidationError("Invalid order ID")
+
+        # ensure not already delivered
+        if hasattr(investment, "delivery_confirmation"):
+            raise serializers.ValidationError("Delivery already confirmed for this order")
+
+        return value
 
     def create(self, validated_data):
-        order_id = validated_data.pop('order_id')
-        try:
-            investment = PartnerInvestment.objects.get(order_id=order_id)
-        except PartnerInvestment.DoesNotExist:
-            raise serializers.ValidationError({"order_id": "Invalid order ID"})
-
-        # Ensure only one confirmation per order
-        if hasattr(investment, "delivery_confirmation"):
-            raise serializers.ValidationError({"order_id": "Delivery confirmation already exists"})
+        order_id = validated_data["order_id"]
+        investment = PartnerInvestment.objects.get(order_id=order_id)
 
         # Create delivery confirmation
         delivery = OrderDeliveryConfirmation.objects.create(investment=investment)
@@ -91,12 +97,13 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
         # Generate OTP
         otp = delivery.generate_otp()
 
-        # Send OTP to vendor
-        vendor = investment.vendor
-        vendor_email = vendor.user.email if hasattr(vendor, "user") else vendor.store_email
-        EmailOTP.objects.create(user=vendor, otp=otp)
+        # Save OTP in EmailOTP
+        vendor_user = investment.vendor.user
+        EmailOTP.objects.create(user=vendor_user, otp=otp)
 
-        from utils.email import send_email   # adjust path
+        # Send email
+        vendor_email = vendor_user.email or investment.vendor.store_email
+        # from utils.email import send_email  # adjust import
         send_email(
             vendor_email,
             "Delivery OTP Code",
@@ -105,45 +112,38 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
         )
 
         return delivery
-    
-class OrderDeliveryConfirmationSerializer(serializers.Serializer):
+
+
+class DeliveryOTPVerifySerializer(serializers.Serializer):
     order_id = serializers.CharField()
     otp = serializers.CharField(max_length=6)
 
-    def validate(self, attrs):
-        order_id = attrs.get("order_id")
-        otp = attrs.get("otp")
+    def validate(self, data):
+        order_id = data.get("order_id")
+        otp = data.get("otp")
 
         try:
             investment = PartnerInvestment.objects.get(order_id=order_id)
         except PartnerInvestment.DoesNotExist:
             raise serializers.ValidationError({"order_id": "Invalid order ID"})
 
+        vendor_user = investment.vendor.user
         try:
-            delivery = investment.delivery_confirmation
-        except OrderDeliveryConfirmation.DoesNotExist:
-            raise serializers.ValidationError({"order_id": "No delivery confirmation found for this order"})
-
-        # Check OTP
-        if not EmailOTP.objects.filter(user=investment.vendor, otp=otp).exists():
+            otp_obj = EmailOTP.objects.filter(user=vendor_user, otp=otp).latest("created_at")
+        except EmailOTP.DoesNotExist:
             raise serializers.ValidationError({"otp": "Invalid OTP"})
 
-        attrs["investment"] = investment
-        attrs["delivery"] = delivery
-        return attrs
+        data["investment"] = investment
+        return data
 
     def save(self, **kwargs):
         investment = self.validated_data["investment"]
-        delivery = self.validated_data["delivery"]
 
-        # Mark delivery + investment as completed
-        delivery.status = "completed"
-        delivery.save()
-
+        # update status
         investment.status = "completed"
         investment.save()
 
-        return delivery
+        return investment
 
 
 # class OrderDeliveryConfirmationSerializer(serializers.ModelSerializer):
