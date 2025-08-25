@@ -357,7 +357,7 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     
     
     def get_vendor_profile_picture(self, obj):
-        return obj.vendor.user.profile_picture.url if obj.vendor and obj.vendor.profile_picture else None
+        return obj.vendor.user.profile_picture.url if obj.vendor and obj.vendor.user.profile_picture else None
 
 
     def get_product(self, obj):
