@@ -93,7 +93,7 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
 
         # Send OTP to vendor
         vendor = investment.vendor
-        vendor_email = vendor.store_email if hasattr(vendor, "store_email") else vendor.user.email
+        vendor_email = vendor.user.email if hasattr(vendor, "user") else vendor.store_email
         EmailOTP.objects.create(user=vendor, otp=otp)
 
         from utils.email import send_email   # adjust path
