@@ -1505,73 +1505,143 @@ class AdminVendorDashboardView(APIView):
 #         serializer = PartnerInvestmentListSerializer(recent_investments, many=True)
 #         return Response(serializer.data)
 
+# class VendorDetailWithOrdersView(APIView):
+#     permission_classes = [IsAdmin]
+
+#     def get(self, request, vendor_id):
+#         today = now().date()
+#         search_query = request.query_params.get('search', '').strip()
+#         try:
+#             vendor = Vendor.objects.prefetch_related(
+#                 # 'orders__items',
+#                 # 'orders__items__product',
+#                 #  'product_set__orderitem_set__order'
+#             ).get(vendor_id=vendor_id)
+#         except Vendor.DoesNotExist:
+#             return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         # Get limit from query params, default to 10
+#         limit = request.query_params.get('limit', 10)
+#         try:
+#             limit = int(limit)
+#         except ValueError:
+#             return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+        
+# # Get all order references for the vendor
+#         vendor_order_refs = Order.objects.filter(vendor=vendor).values_list('reference', flat=True)
+
+# # Filter transactions with those order_ids and remittance type
+#         # todays_remittance = Transaction.objects.filter(
+#         #     order_id__in=vendor_order_refs,
+#         #     transaction_type='remittance',
+#         #     created_at__date=today
+#         # ).aggregate(total=Sum('amount'))['total'] or 0
+
+#         # total_remittance = Transaction.objects.filter(
+#         #     order_id__in=vendor_order_refs,
+#         #     transaction_type='remittance',
+#         # ).aggregate(total=Sum('amount'))['total'] or 0
+
+#         # total_remittance = Remittance.objects.aggregate(
+#         #     total=Sum('amount')
+#         # )['total'] or 0
+
+#         # todays_remittance = Remittance.objects.filter(
+#         #     created_at__date=date.today()
+#         # ).aggregate(total=Sum('amount'))['total'] or 0
+
+#         todays_remittance = Remittance.objects.filter(
+#     created_at__date=date.today()
+# ).values(
+#     'vendor__id', 'vendor__store_email', 'vendor__first_name', 'vendor__last_name'
+# ).annotate(
+#     total_remittance=Sum('amount')
+# ).order_by('-total_remittance') or 0
+        
+                
+#         total_remittance = Remittance.objects.values(
+#             'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
+#         ).annotate(
+#             total_remittance=Sum('amount')
+#         ).order_by('-total_remittance') or 0
+
+#         # Transactions list (filtered by "remittance" type)
+#         transactions_qs = Transaction.objects.filter(
+#             order_id__in=vendor_order_refs,
+#             transaction_type='remittance'
+#         )
+
+#         # Apply search filter
+#         if search_query:
+#             transactions_qs = transactions_qs.filter(
+#                 Q(order_id__icontains=search_query) |
+#                 Q(reference__icontains=search_query) |
+#                 Q(description__icontains=search_query)
+#             )
+
+#         # Paginate or limit results
+#         transactions_qs = transactions_qs.order_by('-created_at')[:limit]
+
+#         transactions_data = [
+#             {
+#                 "transaction_id": tx.id,
+#                 "order_id": tx.order_id,
+#                 "amount": tx.amount,
+#                 "status": tx.status,
+#                 "reference": tx.reference,
+#                 "description": tx.description,
+#                 "created_at": tx.created_at,
+#                 "payment_method": tx.payment_method,
+#                 "bank_name": tx.bank_name,
+#                 "account_number": tx.account_number,
+#                 "account_name": tx.account_name,
+#             }
+#             for tx in transactions_qs
+#         ]
+
+#         # Pass the limit to serializer context
+#         serializer = VendorDetailSerializer(vendor, context={'order_limit': limit})
+#         return Response({
+#             "today_remittance":todays_remittance,
+#             "total_remittance":total_remittance,
+#            "vendor_details": serializer.data,
+#             "transactions": transactions_data
+#         })
+    
 class VendorDetailWithOrdersView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request, vendor_id):
         today = now().date()
         search_query = request.query_params.get('search', '').strip()
-        try:
-            vendor = Vendor.objects.prefetch_related(
-                # 'orders__items',
-                # 'orders__items__product',
-                #  'product_set__orderitem_set__order'
-            ).get(vendor_id=vendor_id)
-        except Vendor.DoesNotExist:
-            return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Get limit from query params, default to 10
         limit = request.query_params.get('limit', 10)
         try:
             limit = int(limit)
         except ValueError:
             return Response({"error": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
-        
-# Get all order references for the vendor
-        vendor_order_refs = Order.objects.filter(vendor=vendor).values_list('reference', flat=True)
 
-# Filter transactions with those order_ids and remittance type
-        # todays_remittance = Transaction.objects.filter(
-        #     order_id__in=vendor_order_refs,
-        #     transaction_type='remittance',
-        #     created_at__date=today
-        # ).aggregate(total=Sum('amount'))['total'] or 0
+        try:
+            vendor = Vendor.objects.select_related('user').get(vendor_id=vendor_id)
+        except Vendor.DoesNotExist:
+            return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # total_remittance = Transaction.objects.filter(
-        #     order_id__in=vendor_order_refs,
-        #     transaction_type='remittance',
-        # ).aggregate(total=Sum('amount'))['total'] or 0
-
-        # total_remittance = Remittance.objects.aggregate(
-        #     total=Sum('amount')
-        # )['total'] or 0
-
-        # todays_remittance = Remittance.objects.filter(
-        #     created_at__date=date.today()
-        # ).aggregate(total=Sum('amount'))['total'] or 0
-
+        # Remittances
         todays_remittance = Remittance.objects.filter(
-    created_at__date=date.today()
-).values(
-    'vendor__id', 'vendor__store_email', 'vendor__first_name', 'vendor__last_name'
-).annotate(
-    total_remittance=Sum('amount')
-).order_by('-total_remittance') or 0
-        
-                
-        total_remittance = Remittance.objects.values(
-            'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
-        ).annotate(
-            total_remittance=Sum('amount')
-        ).order_by('-total_remittance') or 0
+            vendor=vendor,
+            created_at__date=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
 
-        # Transactions list (filtered by "remittance" type)
+        total_remittance = Remittance.objects.filter(
+            vendor=vendor
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        # Transactions
+        vendor_order_refs = Order.objects.filter(vendor=vendor).values_list('reference', flat=True)
         transactions_qs = Transaction.objects.filter(
             order_id__in=vendor_order_refs,
             transaction_type='remittance'
         )
 
-        # Apply search filter
         if search_query:
             transactions_qs = transactions_qs.filter(
                 Q(order_id__icontains=search_query) |
@@ -1579,9 +1649,7 @@ class VendorDetailWithOrdersView(APIView):
                 Q(description__icontains=search_query)
             )
 
-        # Paginate or limit results
         transactions_qs = transactions_qs.order_by('-created_at')[:limit]
-
         transactions_data = [
             {
                 "transaction_id": tx.id,
@@ -1599,15 +1667,15 @@ class VendorDetailWithOrdersView(APIView):
             for tx in transactions_qs
         ]
 
-        # Pass the limit to serializer context
+        # Vendor serializer
         serializer = VendorDetailSerializer(vendor, context={'order_limit': limit})
+
         return Response({
-            "today_remittance":todays_remittance,
-            "total_remittance":total_remittance,
-           "vendor_details": serializer.data,
+            "today_remittance": todays_remittance,
+            "total_remittance": total_remittance,
+            "vendor_details": serializer.data,
             "transactions": transactions_data
         })
-    
 
 class PartnerDetailWithInvestmentsView(APIView):
     permission_classes = [IsAdmin]
