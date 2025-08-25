@@ -263,12 +263,12 @@ class CreateAndSendDeliveryOTPView(APIView):
         otp = delivery.generate_otp()
         
         # 🔑 Get the vendor related to this investment
-        vendor = investment.product.vendor  # or investment.shop.vendor depending on your model
-        vendor_user = vendor.user
-        vendor_email = vendor_user.email or vendor.store_email
+        vendor = investment.vendor   # ✅ already FK
+        vendor_email = vendor.email
+        vendor_email = vendor_email or vendor.store_email
 
         # Save OTP
-        EmailOTP.objects.create(user=vendor_user, otp=otp)
+        EmailOTP.objects.create(user=vendor, otp=otp)
 
         # Send email
         send_email(

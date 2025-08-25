@@ -72,7 +72,7 @@ class DeliveryConfirmationCreateSerializer(serializers.ModelSerializer):
     order_id = serializers.CharField(write_only=True)
 
     class Meta:
-        model = OrderDeliveryConfirmation
+        model = PartnerInvestment
         fields = [
             'order_id'
         ]
