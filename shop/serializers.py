@@ -41,7 +41,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'product_id', 'name', 'description',
             'price', 'stock_quantity', 'roi_percentage',
             'quantity_per_unit', 'kg_per_unit',
-            'images', 'uploaded_images', 'bags', 'company' 
+            'images', 'uploaded_images', 'bags', 'company_name' 
         ]
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
