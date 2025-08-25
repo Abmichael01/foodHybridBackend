@@ -159,13 +159,15 @@ class VendorSignupSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True, min_length=4)  # ✅ accept username
     password = serializers.CharField(write_only=True, min_length=8)
     first_name = serializers.CharField(write_only=True, required=False)
-    last_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False) 
+    profile_picture = serializers.ImageField(write_only=True, required=False, allow_null=True)
+
 
     class Meta:
         model = Vendor
         fields = [
             "vendor_id", "store_name", "store_email", "store_phone", "store_address",
-            "email", "username", "password", "first_name", "last_name"
+            "email", "username", "password", "first_name", "last_name", "profile_picture"
         ]
         read_only_fields = ["vendor_id"]
 
@@ -190,6 +192,7 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         password = validated_data.pop("password")
         first_name = validated_data.pop("first_name", "")
         last_name = validated_data.pop("last_name", "")
+        profile_picture = validated_data.pop("profile_picture", None)
 
           # find existing user OR create new one
         user, created = Users.objects.get_or_create(
@@ -206,6 +209,8 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         user.last_name = last_name or user.last_name
         if password:
             user.set_password(password)
+        if profile_picture:
+            user.profile_picture = profile_picture
         user.user_type = "vendor"
         user.save()
 
