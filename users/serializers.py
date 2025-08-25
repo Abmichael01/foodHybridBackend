@@ -99,7 +99,7 @@ class DeliveryConfirmationCreateSerializer(serializers.Serializer):
 
         # Save OTP in EmailOTP
         user = investment.vendor.user
-        EmailOTP.objects.create(user, otp=otp)
+        EmailOTP.objects.create(user=user, otp=otp)
 
         # Send email
         vendor_email = user.email or investment.vendor.store_email
