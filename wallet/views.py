@@ -463,7 +463,7 @@ class VendorRemitView(APIView):
         return Response({
             "message": "Remittance awaiting confirmation",
             "remittance": {
-                "reference": remit.reference,
+                "reference": remit.remittance_id,
                 "amount": remit.amount,
                 "status": remit.status,
                 "created_at": remit.created_at
@@ -495,13 +495,13 @@ class AdminConfirmRemittanceView(APIView):
             remit.note = note
 
         remit.confirmed_by = request.user
-        remit.confirmed_at = timezone.now()
+        remit.confirmed_at = now()
         remit.save()
 
         return Response({
             "message": f"Remittance {action}d successfully",
             "remittance": {
-                "reference": remit.reference,
+                "reference": remit.remittance_id,
                 "vendor": remit.vendor.email,
                 "amount": remit.amount,
                 "status": remit.status,
