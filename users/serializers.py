@@ -689,7 +689,7 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
         ).values('id', 'amount_invested', 'status', 'created_at', 'partner__email', 'vendor__name')
     
     def get_name(self, obj):
-        return obj.vendor.user.get_full_name() if hasattr(obj.vendor, 'get_full_name') else str(obj.vendor.user)
+        return obj.user.get_full_name() if hasattr(obj.user, 'get_full_name') else str(obj.user)
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Notification
