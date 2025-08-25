@@ -1553,7 +1553,7 @@ class VendorDetailWithOrdersView(APIView):
         todays_remittance = Remittance.objects.filter(
     created_at__date=date.today()
 ).values(
-    'vendor__id', 'vendor__email', 'vendor__first_name', 'vendor__last_name'
+    'vendor__id', 'vendor__store_email', 'vendor__first_name', 'vendor__last_name'
 ).annotate(
     total_remittance=Sum('amount')
 ).order_by('-total_remittance') or 0
