@@ -127,10 +127,11 @@ class SignupView(APIView):
             user = base_serializer.save()  # Just creates the base user
 
         otp = generate_otp()
+        print(otp)
         EmailOTP.objects.create(user=user, otp=otp)
         send_email(user, "code", "Your OTP Code", extra_context={"code": otp})
 
-        return Response({'detail': 'OTP sent to your email.'}, status=status.HTTP_200_OK)
+        return Response({'detail': 'OTP sent to your email.',"otp":otp}, status=status.HTTP_200_OK)
 
     def patch(self, request):
         user_type = request.data.get('user_type', 'partner')  # ✅ Now handled here
@@ -178,7 +179,7 @@ class VerifyOTPView(APIView):
             return Response({'detail': 'Invalid email, Please sign up'}, status=status.HTTP_400_BAD_REQUEST)
 
         otp_record = EmailOTP.objects.filter(user=user, otp=otp_input).first()
-        print(otp_input, user)
+        print(otp_record)
         if otp_record:
             user.is_email_verified = True
             user.save()
