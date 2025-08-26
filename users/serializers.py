@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from shop.serializers import ProductSerializer
-from wallet.models import Transaction
+from wallet.models import Remittance, Transaction
 from .models import Users, Driver,OrderDeliveryConfirmation, Notification, EmailOTP
 from shop.models import PartnerInvestment, Product, ROIPayout, OrderItem, Order, Vendor
 from datetime import timedelta
@@ -735,6 +735,16 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['product_name', 'quantity', 'price']
 
+class RemittanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Remittance
+        fields = [
+            'remittance_id',
+            'amount',
+            'status',
+            'created_at'
+        ]
+
 class VendorOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
@@ -767,16 +777,23 @@ class VendorOrderSerializer(serializers.ModelSerializer):
         ).first()
         return investment.order_id if investment else None
 
+    # def get_transactions(self, obj):
+    #     limit = self.context.get('transaction_limit', 10)  # optional limit
+    #     transactions = obj.remittances.all().order_by('-created_at')[:limit]
+    #     return RemittanceSerializer(transactions, many=True).data
+    
+
 class VendorDetailSerializer(serializers.ModelSerializer):
     recent_orders = serializers.SerializerMethodField()
     email = serializers.EmailField(source="user.email", read_only=True)
     name = serializers.SerializerMethodField()
     username = serializers.CharField(source="user.username", read_only=True)
     profile_picture = serializers.ImageField(source="user.profile_picture", read_only=True)
+    transactions = serializers.SerializerMethodField()
 
     class Meta:
         model = Vendor
-        fields = ['vendor_id', 'name', 'email', 'username', 'store_name', 'store_email', 'store_phone', 'store_address', 'profile_picture', 'created_at', 'recent_orders']
+        fields = ['vendor_id', 'name', 'email', 'username', 'store_name', 'store_email', 'store_phone', 'store_address', 'profile_picture', 'created_at', 'transactions', 'recent_orders']
 
     def get_recent_orders(self, obj):
         limit = self.context.get('order_limit', 10)  # Default if not provided
@@ -785,6 +802,14 @@ class VendorDetailSerializer(serializers.ModelSerializer):
     
     def get_name(self, obj):
         return obj.user.get_full_name() if hasattr(obj.user, 'get_full_name') else str(obj.user)
+    
+    def get_transactions(self, obj):
+        limit = self.context.get('transaction_limit', 10)
+        transactions = Remittance.objects.filter(
+            vendor=obj
+        ).order_by('-created_at')[:limit]
+        return RemittanceSerializer(transactions, many=True).data
+
 
         
 class VendorOverviewSerializer(serializers.ModelSerializer):
@@ -1001,14 +1026,20 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
         many=True, read_only=True
     )
     transactions = TransactionSerializer(many=True)
+    remittances = serializers.SerializerMethodField()
 
     class Meta:
         model = Vendor
         fields = [
             "id", "store_name", "store_email", "store_phone",
             "store_address", "user_email", "user_name", 'name',
-            "investments", "deliveries", "transactions"
+            "investments", "deliveries", "transactions", "remittances"
         ]
     
     def get_name(self, obj):
         return obj.user.get_full_name() if hasattr(obj.user, 'get_full_name') else str(obj.user)
+    
+    def get_remittances(self, obj):
+        limit = self.context.get("remittance_limit", 10)  # Default to 10 if not passed
+        remittances = Remittance.objects.filter(vendor=obj).order_by("-created_at")[:limit]
+        return RemittanceSerializer(remittances, many=True).data

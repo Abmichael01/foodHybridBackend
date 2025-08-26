@@ -1960,6 +1960,27 @@ class AdminDashboardView(APIView):
     total_balance=Sum('wallet__balance')
 )['total_balance'] or 0
 
+# -------------------
+        # Remittance Stats
+        # -------------------
+        todays_remittance_total = Remittance.objects.filter(
+            status="completed",
+            created_at__date=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        remittance_history_qs = Remittance.objects.select_related('vendor').order_by('-created_at')[:limit]
+        remittance_history = [
+            {
+                "remittance_id": r.remittance_id,
+                "vendor_name": r.vendor.store_name if r.vendor else None,
+                "amount": r.amount,
+                "status": r.status,
+                "created_at": r.created_at,
+            }
+            for r in remittance_history_qs
+        ]
+
+
             # return Response({
             # "global_summary": {
             #     "total_pending_withdrawals_amount": total_pending_amount,
@@ -1972,8 +1993,9 @@ class AdminDashboardView(APIView):
 
         return Response({
             "pending_withdrawals": total_pending_count,
-            "todays_remittance": 0,
+            "todays_remittance": todays_remittance_total,
             "total_balance": total_accumulative_balance,
+            "remittance_history": remittance_history,
             "recent_orders": recent_orders,
             "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)

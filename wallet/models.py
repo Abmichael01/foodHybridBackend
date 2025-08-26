@@ -5,7 +5,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from users.models import Users
-from shop.models import Product, Vendor
+from shop.models import Order, Product, Vendor
 from django.utils.timezone import now
 
 class Wallet(models.Model):
@@ -84,6 +84,7 @@ class Beneficiary(models.Model):
         
 class Remittance(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="remittances")
+    order = models.ForeignKey(Order, related_name="remittances", on_delete=models.CASCADE, default=None, null=True, blank=True)  
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     remittance_id = models.CharField(max_length=20, unique=True, default=uuid.uuid4)
     status = models.CharField(

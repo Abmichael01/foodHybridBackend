@@ -5,8 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
 from users.models import Notification, Users
+from users.serializers import RemittanceSerializer
 from .models import Remittance, VendorasBeneficiary, Wallet, Transaction, Beneficiary
-from shop.models import PartnerInvestment, Vendor
+from shop.models import Order, PartnerInvestment, Vendor
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
@@ -470,9 +471,37 @@ class BeneficiaryDetailView(APIView):
 #             }
 #         }, status=status.HTTP_201_CREATED)
 
+# class VendorRemitView(APIView):
+#     permission_classes = [IsVendor]
+
+#     def post(self, request):
+#         order_id = request.data.get("order_id")
+#         amount = request.data.get("amount")
+
+#         if not order_id or not amount:
+#             return Response({"error": "Order ID and amount are required"}, status=400)
+
+#         vendor = Vendor.objects.get(user=request.user)
+#         order = Order.objects.get(reference=order_id, vendor=vendor)
+
+#         remit = Remittance.objects.create(
+#             vendor=vendor,
+#             order=order,
+#             amount=amount,
+#             remittance_id=generate_remmittance_reference(),
+#             status="pending"
+#         )
+#         otp = remit.generate_otp()
+#         send_email(vendor.user, "code", "Your OTP Code", extra_context={"code": otp})
+
+#         return Response({
+#             "message": "Remittance initiated. Please confirm with OTP.",
+#             "remittance": RemittanceSerializer(remit).data
+#         }, status=201)
+
+
 class VendorRemitView(APIView):
     permission_classes = [IsVendor]
-
     def post(self, request):
         user = request.user
         if user.user_type != "vendor":
