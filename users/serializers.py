@@ -736,13 +736,24 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['product_name', 'quantity', 'price']
 
 class VendorOrderSerializer(serializers.ModelSerializer):
-    partner_name = serializers.CharField(source='partner.full_name', read_only=True)
+    partner_name = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
     items = OrderItemSerializer(many=True, read_only=True)
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'partner_name', 'total_amount', 'created_at', 'items']
+        fields = ['id', 'partner_name', 'total_amount', 'created_at', 'status', 'items']
+
+    def get_partner_name(self, obj):
+       """
+       Get partner name from PartnerInvestment if exists, 
+       otherwise fallback to order user.
+       """
+       investment = PartnerInvestment.objects.filter(order_id=obj.reference).first()
+       if investment:
+           return investment.partner.get_full_name() if hasattr(investment.partner, "get_full_name") else str(investment.partner)
+       return obj.user.get_full_name() if hasattr(obj.user, "get_full_name") else str(obj.user)
 
     def get_total_amount(self, obj):
         return sum(item.price * item.quantity for item in obj.items.all())

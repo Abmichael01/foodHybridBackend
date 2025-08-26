@@ -34,6 +34,7 @@ class Transaction(models.Model):
         ('investment', 'Investment'),
         ('investmentUpdate', 'InvestmentUpdate'),
         ('roi', 'Return On Investment'),
+        ('remittance', 'Remittance')
     )
     STATUS_CHOICES = (
         ('pending', 'Pending'),
