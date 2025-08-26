@@ -179,6 +179,7 @@ class CheckoutView(APIView):
         # Create order
         order = Order.objects.create(
             user=user,
+            vendor=vendor,
             total_amount=total,
             reference=generate_reference(),
             status="completed"
