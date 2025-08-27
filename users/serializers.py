@@ -747,14 +747,14 @@ class RemittanceSerializer(serializers.ModelSerializer):
 
 class VendorOrderSerializer(serializers.ModelSerializer):
     partner_name = serializers.SerializerMethodField()
-    total_amount = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
     items = OrderItemSerializer(many=True, read_only=True)
     status = serializers.CharField(read_only=True)
     order_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'partner_name', 'total_amount', 'created_at', 'status', 'items', 'order_id']
+        fields = ['id', 'partner_name', 'amount', 'created_at', 'status', 'items', 'order_id']
 
     def get_partner_name(self, obj):
        """
@@ -766,7 +766,7 @@ class VendorOrderSerializer(serializers.ModelSerializer):
            return investment.partner.get_full_name() if hasattr(investment.partner, "get_full_name") else str(investment.partner)
        return obj.user.get_full_name() if hasattr(obj.user, "get_full_name") else str(obj.user)
 
-    def get_total_amount(self, obj):
+    def get_amount(self, obj):
         return sum(item.price * item.quantity for item in obj.items.all())
 
     def get_order_id(self, obj):

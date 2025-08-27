@@ -519,6 +519,16 @@ class VendorRemitView(APIView):
             remittance_id=remittance_ref,
             status="pending"
         )
+        Transaction.objects.create(
+            user=user,
+            from_user=vendor.user.first_name + " " + vendor.user.last_name,
+            transaction_type="remittance",
+            amount=amount,
+            status="pending",  # may require admin approval
+            reference=generate_reference(),
+            description="Remittance Initiated",
+            # order_id = investment.order_id
+        )
 
         # Generate OTP
         otp = remit.generate_otp()
