@@ -257,7 +257,7 @@ EMAIL_HOST_USER = 'smtp@mailtrap.io'  # Use your email account
 EMAIL_HOST_PASSWORD = '71cedbbee34386b1bd1c21e89f6e7cc3'#'jydf qvhy xogx azot' # For gmail use app password
 DEFAULT_FROM_EMAIL = 'Foodhybrid <no-reply@yourdomain.com>'
 
-EMAIL_USE_SSL = True     # for SSL communication use EMAIL_USE_SSL
+EMAIL_USE_TLS = True     # for SSL communication use EMAIL_USE_SSL
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
