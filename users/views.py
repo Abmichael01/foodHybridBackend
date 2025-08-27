@@ -2188,8 +2188,8 @@ class AdminOrderDeliveryDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class VendorDashboardView(RetrieveAPIView):
-    serializer_class = VendorDashboardSerializer
     permission_classes = [IsVendor]
+    serializer_class = VendorDashboardSerializer
 
     def get_object(self):
         return Vendor.objects.get(user=self.request.user)
