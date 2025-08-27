@@ -52,11 +52,16 @@ def send_email(user, type, subject, extra_context=None):
     email = EmailMultiAlternatives(
         subject=subject_map.get(type, subject),
         body=html_message,
-        from_email = 'Foodhybrid <no-reply@yourdomain.com>',
+        from_email = settings.DEFAULT_FROM_EMAIL,
         to=[user.email],
     )
     email.content_subtype = "html"
-    email.send(fail_silently=True)
+       # ✅ Wrap send in try/except
+    try:
+        email.send(fail_silently=True)
+    except Exception as e:
+        import logging
+        logging.error(f"Email sending failed: {e}")
 # threading.Thread(target=_send).start()
 
 def send_fh_email(user, subject, message, code=None, action_url=None, action_text=None):
