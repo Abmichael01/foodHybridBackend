@@ -11,6 +11,7 @@ urlpatterns = [
     path('beneficiaries/<int:pk>/', BeneficiaryDetailView.as_view(), name='update-delete-beneficiary'), 
     path("remittance/confirm/", ConfirmRemittanceView.as_view(), name="admin-confirm-remittance"),
     path("remittance/", VendorRemitView.as_view(), name="create-remittance"),
+    path("remittance/<str:remittance_id>/approve", AdminApproveRemittanceView.as_view(), name="remittance-approval"),
     path("vendor/beneficiaries/", VendorBeneficiaryView.as_view(), name="beneficiary-list-create"),
     path("vendor/beneficiaries/<int:pk>/", BeneficiaryDeleteView.as_view(), name="beneficiary-delete"),
     path("stripe/webhook/", stripe_webhook, name="stripe-webhook"),

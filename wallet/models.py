@@ -89,7 +89,7 @@ class Remittance(models.Model):
     remittance_id = models.CharField(max_length=20, unique=True, default=uuid.uuid4)
     status = models.CharField(
         max_length=20,
-        choices=[("pending", "Pending"), ("completed", "Completed"), ("failed", "Failed")],
+        choices=[("pending", "Pending"), ("completed", "Completed"), ("failed", "Failed"), ("confirmed", "Confirmed"),("rejected", "Rejected")],
         default="pending"
     )
     otp = models.CharField(max_length=6, null=True, blank=True)

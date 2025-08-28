@@ -588,7 +588,50 @@ class ConfirmRemittanceView(APIView):
             }
         }, status=status.HTTP_200_OK)
 
+class AdminApproveRemittanceView(APIView):
+    permission_classes = [IsAdmin]  # Only admins can approve
+
+    def post(self, request, remittance_id):
+        # remittance_id = request.data.get("remittance_id")
+        action = request.data.get("action")  # approve | reject
+
+        if not remittance_id or not action:
+            return Response({"error": "Reference and action are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            remit = Remittance.objects.get(remittance_id=remittance_id)
+        except Remittance.DoesNotExist:
+            return Response({"error": "Invalid remittance reference"}, status=status.HTTP_404_NOT_FOUND)
+
+        if remit.status != "completed":
+            return Response({"error": "Only completed remittances can be approved/rejected"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == "approve":
+            remit.status = "approved"
+            # remit.admin_approved_at = now()
+            # remit.admin_approved_by = request.user  # store which admin approved
+        elif action == "reject":
+            remit.status = "rejected"
+            # remit.admin_rejected_at = now()
+            # remit.admin_rejected_by = request.user
+        else:
+            return Response({"error": "Invalid action. Use 'approve' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        remit.save()
+
+        return Response({
+            "message": f"Remittance {action}d successfully",
+            "remittance": {
+                "remittance_id": remit.remittance_id,
+                "amount": remit.amount,
+                "status": remit.status,
+                "created_at": remit.created_at,
+                # "approved_at": getattr(remit, "admin_approved_at", None),
+                # "approved_by": getattr(remit, "admin_approved_by", None).id if getattr(remit, "admin_approved_by", None) else None,
+            }
+        }, status=status.HTTP_200_OK)
     
+
 # class AdminConfirmRemittanceView(APIView):
 #     permission_classes = [IsAdmin]
 
