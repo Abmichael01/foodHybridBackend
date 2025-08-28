@@ -1684,7 +1684,7 @@ class PartnerDetailWithInvestmentsView(APIView):
     def get(self, request, partner_id):
         try:
             partner = Users.objects.prefetch_related(
-                'investments__vendor',
+                 'investments__vendor',
                 'investments__product',
                 'transactions'
             ).get(id=partner_id, user_type='partner')
@@ -1999,6 +1999,7 @@ class AdminDashboardView(APIView):
             "recent_orders": recent_orders,
             "withdrawal_request": user_summaries
         }, status=status.HTTP_200_OK)
+
 
 class AdminROICycleBreakdownView(APIView):
     permission_classes = [IsAdmin]
