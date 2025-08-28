@@ -11,7 +11,7 @@ from wallet.utils import generate_reference
 from wallet.models import Transaction
 from foodhybrid.utils import send_email
 from datetime import timedelta, date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from users.utils import verify_user_pin
 
 class AddToCartView(APIView):
@@ -104,7 +104,7 @@ class ViewCart(APIView):
         for item in items:
             product = item.product
             duration = product.duration_days or 105
-            roi_percentage = product.roi_percentage or Decimal('0')
+            roi_percentage = (product.roi_percentage / Decimal('3')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             amount = Decimal(product.price) * item.quantity
             total_roi = (amount * roi_percentage / Decimal('100')).quantize(Decimal('0.01'))
             roi_per_cycle = round(total_roi / 3, 2)
