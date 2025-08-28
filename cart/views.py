@@ -127,7 +127,8 @@ class ViewCart(APIView):
                 "total_amount": round(amount, 2),
                 "roi_percentage": roi_percentage,
                 "total_roi": total_roi,
-                "roi_cycles": cycles
+                "roi_cycles": cycles,
+                "total_bags": product.quantity_per_unit * item.quantity if product.quantity_per_unit else 0
             })
 
         return Response({
