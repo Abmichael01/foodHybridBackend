@@ -596,7 +596,7 @@ class AdminApproveRemittanceView(APIView):
         action = request.data.get("action")  # approve | reject
 
         if not remittance_id or not action:
-            return Response({"error": "Reference and action are required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             remit = Remittance.objects.get(remittance_id=remittance_id)
