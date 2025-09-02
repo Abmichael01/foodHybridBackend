@@ -57,7 +57,7 @@ class AdminAddProductView(APIView):
 
             return Response({
                 'detail': 'Product created successfully.',
-                'product': ProductSerializer(product).data
+                'product': ProductSerializer(product, context={'request': request}).data
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -76,7 +76,7 @@ class AdminUpdateProductView(APIView):
             product = serializer.save()
             return Response({
                 'detail': 'Product updated successfully.',
-                'product': ProductSerializer(product).data
+                'product': ProductSerializer(product, context={'request': request}).data
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -100,13 +100,13 @@ class ProductWithShopView(APIView):
         if product_id:
             try:
                 product = Product.objects.filter(product_id=product_id).first()
-                serializer = ProductSerializer(product)
+                serializer = ProductSerializer(product, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except Product.DoesNotExist:
                 return Response({'detail': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
         else:
             products = Product.objects.all()
-            serializer = ProductSerializer(products, many=True)
+            serializer = ProductSerializer(products, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 

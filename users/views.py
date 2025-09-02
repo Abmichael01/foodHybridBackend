@@ -279,6 +279,9 @@ class VendorListView(ListAPIView):
 #             extra_context={"code": otp}
 #         )
 
+
+
+
 #         return Response({"detail": "Delivery created and OTP sent"}, status=201)
 class CreateAndSendDeliveryOTPView(APIView):
     def post(self, request):
@@ -1471,12 +1474,15 @@ class AdminVendorDashboardView(APIView):
         vendors = Vendor.objects.all()
         total_vendors = vendors.count()
 
-        total_remittance = Remittance.objects.aggregate(
+        total_remittance = Remittance.objects.filter(
+            status='approved'
+        ).aggregate(
             total=Sum('amount')
         )['total'] or 0
 
         today_remittance = Remittance.objects.filter(
-            created_at__date=date.today()
+            created_at__date=date.today(),
+            status='approved'
         ).aggregate(total=Sum('amount'))['total'] or 0
 
         serialized_vendors = VendorOverviewSerializer(vendors, many=True).data
@@ -1630,10 +1636,11 @@ class VendorDetailWithOrdersView(APIView):
         todays_remittance = Remittance.objects.filter(
             vendor=vendor,
             created_at__date=today
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        ).exclude(status='pending').aggregate(total=Sum('amount'))['total'] or 0
 
         total_remittance = Remittance.objects.filter(
-            vendor=vendor
+            vendor=vendor,
+            status='approved'
         ).aggregate(total=Sum('amount'))['total'] or 0
 
         # Transactions
@@ -1964,11 +1971,11 @@ class AdminDashboardView(APIView):
         # Remittance Stats
         # -------------------
         todays_remittance_total = Remittance.objects.filter(
-            status="completed",
+            status="approved",
             created_at__date=today
         ).aggregate(total=Sum('amount'))['total'] or 0
 
-        remittance_history_qs = Remittance.objects.select_related('vendor').order_by('-created_at')[:limit]
+        remittance_history_qs = Remittance.objects.select_related('vendor').exclude(status='pending').order_by('-created_at')[:limit]
         remittance_history = [
             {
                 "remittance_id": r.remittance_id,

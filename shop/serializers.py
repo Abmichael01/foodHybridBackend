@@ -22,12 +22,20 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
     class Meta:
         model = ProductImage
         fields = ['id', 'image']
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if request and obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url if obj.image else None
 
 class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField(read_only=True)
     bags = serializers.SerializerMethodField(read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
@@ -68,5 +76,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_bags(self, obj):
         return (obj.quantity_per_unit or 0) * (obj.stock_quantity or 0)
+    
+    def get_images(self, obj):
+        request = self.context.get('request')
+        image_urls = []
+        for product_image in obj.images.all():
+            if product_image.image:
+                if request:
+                    image_urls.append(request.build_absolute_uri(product_image.image.url))
+                else:
+                    image_urls.append(product_image.image.url)
+        return image_urls
 
 

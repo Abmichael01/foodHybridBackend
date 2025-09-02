@@ -807,7 +807,7 @@ class VendorDetailSerializer(serializers.ModelSerializer):
         limit = self.context.get('transaction_limit', 10)
         transactions = Remittance.objects.filter(
             vendor=obj
-        ).order_by('-created_at')[:limit]
+        ).exclude(status='pending').order_by('-created_at')[:limit]
         return RemittanceSerializer(transactions, many=True).data
 
 
@@ -828,13 +828,15 @@ class VendorOverviewSerializer(serializers.ModelSerializer):
 
     def get_total_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
-        vendor=vendor
+        vendor=vendor,
+        status='approved'
         ).aggregate(total=Sum('roi_paid'))['total'] or 0
 
     def get_today_remittance(self, vendor):
         return PartnerInvestment.objects.filter(
             vendor=vendor,
-            created_at__date=date.today()
+            created_at__date=date.today(),
+            status='approved'
         ).aggregate(total=Sum('amount_invested'))['total'] or 0
 
     def get_total_orders(self, vendor):
@@ -1041,5 +1043,5 @@ class VendorDashboardSerializer(serializers.ModelSerializer):
     
     def get_remittances(self, obj):
         limit = self.context.get("remittance_limit", 10)  # Default to 10 if not passed
-        remittances = Remittance.objects.filter(vendor=obj).order_by("-created_at")[:limit]
+        remittances = Remittance.objects.filter(vendor=obj).exclude(status='pending').order_by("-created_at")[:limit]
         return RemittanceSerializer(remittances, many=True).data

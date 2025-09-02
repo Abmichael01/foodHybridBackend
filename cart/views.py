@@ -104,7 +104,7 @@ class ViewCart(APIView):
         for item in items:
             product = item.product
             duration = product.duration_days or 105
-            roi_percentage = (product.roi_percentage / Decimal('3')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            roi_percentage = product.roi_percentage
             amount = Decimal(product.price) * item.quantity
             total_roi = (amount * roi_percentage / Decimal('100')).quantize(Decimal('0.01'))
             roi_per_cycle = round(total_roi / 3, 2)
