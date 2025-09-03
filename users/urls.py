@@ -46,4 +46,5 @@ urlpatterns = [
     path('admin/notification/', AdminNotificationListView.as_view(), name='admin-notification'),
     path('admin/updateStatus/', UpdateStatusView.as_view(), name='update-status'),
     path('admin/orders/<str:order_id>/', AdminOrderDeliveryDetailView.as_view(), name='admin-order-delivery-detail'),
+    path("partners/<int:user_id>/delete/", DeletePartnerAPIView.as_view(), name="delete-partner"),
 ]

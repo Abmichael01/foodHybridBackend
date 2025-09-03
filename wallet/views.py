@@ -802,6 +802,25 @@ def stripe_webhook(request):
             tx.status = "failed"
             tx.save()
 
+    elif event["type"] == "payment_intent.canceled":
+        intent = event["data"]["object"]
+        user_id = intent["metadata"].get("user_id")
+        amount = Decimal(intent["metadata"].get("amount"))
+
+        tx = Transaction.objects.filter(
+            user_id=user_id,
+            amount=amount,
+            status="pending",
+            payment_method="stripe",
+            transaction_type="fund"
+        ).last()
+
+        if tx:
+            tx.status = "canceled"
+            tx.save()
+            # save_history(tx, "canceled", "User canceled the payment midway")
+
+
             # Optional: notify user
             # send_notification(user_id, f"Wallet funding failed: {amount}")
 
@@ -825,6 +844,7 @@ def stripe_webhook(request):
             tx.status = "failed"
             tx.save()
             # send_notification(tx.user.id, f"Withdrawal failed: {tx.amount}")
+    
 
     return JsonResponse({"status": "ok"})
 # --------STRIPE WEBHOOK.PY--------

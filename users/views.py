@@ -1685,6 +1685,24 @@ class VendorDetailWithOrdersView(APIView):
             "transactions": transactions_data
         })
 
+
+class DeletePartnerAPIView(APIView):
+    permission_classes = [IsAdmin]  # only admin can delete partners
+
+    def delete(self, request, user_id):
+        try:
+            user = Users.objects.get(id=user_id, is_partner=True)
+            user.delete()  # 👈 HARD DELETE
+            return Response(
+                {"message": "Partner deleted successfully"},
+                status=status.HTTP_200_OK
+            )
+        except Users.DoesNotExist:
+            return Response(
+                {"error": "Partner not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
 class PartnerDetailWithInvestmentsView(APIView):
     permission_classes = [IsAdmin]
 

@@ -354,7 +354,7 @@ Welcome to the future of smart food distribution and thank you for your commitme
                     font-size: 16px;
                   ">{% if type == "account_created" or type == "order_activated" or type == "wallet_funded" or type == "order_on_way" %}
                   Warm Regards,
-
+<!-- 
                     <tr>
             <td align="left">
               <img
@@ -364,58 +364,15 @@ Welcome to the future of smart food distribution and thank you for your commitme
                         style="display: block; border-top: 1px solid #14292c"
                       />
             </td>
-          </tr>
+          </tr> -->
                   {% elif type == "money_on_the_way" %}
                   Stay winning,
-
-                    <tr>
-            <td align="left">
-              <img
-                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756366532/tafiki-email_signature_y57pa0.jpg"
-                        alt="Food Hybrid Logo"
-                        width="100%"
-                        style="display: block; border-top: 1px solid #14292c"
-                      />
-            </td>
-          </tr>
-
                   {% elif type == "order_delivered" or type ==  "withdrawal" %}
                   Cheers,
-                    <tr>
-            <td align="left">
-              <img
-                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756366532/tafiki-email_signature_y57pa0.jpg"
-                        alt="Food Hybrid Logo"
-                        width="100%"
-                        style="display: block; border-top: 1px solid #14292c"
-                      />
-            </td>
-          </tr>
                   {% elif type == "investment_created"%}
                   Kind Regards,
-
-                    <tr>
-            <td align="left">
-              <img
-                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756455600/Tafiki-Email-Signature-advert-2_mhdqah.jpg"
-                        alt="Food Hybrid Logo"
-                        width="100%"
-                        style="display: block; border-top: 1px solid #14292c"
-                      />
-            </td>
-          </tr>
                   {% else %}
                   Best Regards,
-                    <tr>
-            <td align="left">
-              <img
-                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756366532/tafiki-email_signature_y57pa0.jpg"
-                        alt="Food Hybrid Logo"
-                        width="100%"
-                        style="display: block; border-top: 1px solid #14292c"
-                      />
-            </td>
-          </tr>
                   {% endif %}
                   <!-- <br /> Gbenga Eyiolawi.<br /> Co-Founder, Food Hybrid</td> -->
           </tr>
@@ -433,6 +390,16 @@ Welcome to the future of smart food distribution and thank you for your commitme
   frameborder="0"
 ></iframe> -->
 <div style="margin:0; padding:0;">
+  <tr>
+            <td align="left">
+              <img
+                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756366532/tafiki-email_signature_y57pa0.jpg"
+                        alt="Food Hybrid Logo"
+                        width="100%"
+                        style="display: block; border-top: 1px solid #14292c"
+                      />
+            </td>
+          </tr>
   <!-- <video
     autoplay
     muted
@@ -505,7 +472,31 @@ Welcome to the future of smart food distribution and thank you for your commitme
               </table>
             </td>
           </tr>
-
+          {% if type == "account_created" or type == "order_activated" or type == "wallet_funded" or type == "order_on_way" %}
+                 
+  <tr>
+            <td align="left">
+              <img
+                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756915958/Tafiki-Email-Signature-advert-3_vrzxri.jpg"
+                        alt="Food Hybrid Logo"
+                        width="100%"
+                        style="display: block; border-top: 1px solid #14292c"
+                      />
+            </td>
+          </tr>
+          {%else%}
+          
+  <tr>
+            <td align="left">
+              <img
+                        src="https://res.cloudinary.com/dugbwsqul/image/upload/v1756915944/Tafiki-Email-Signature-advert-2_il4lag.jpg"
+                        alt="Food Hybrid Logo"
+                        width="100%"
+                        style="display: block; border-top: 1px solid #14292c"
+                      />
+            </td>
+          </tr> 
+          {%endif%}
           <!-- Legal Info -->
           <tr>
             <td bgcolor="#13201a" class="white-text" style="
@@ -533,6 +524,7 @@ background: linear-gradient(135deg, #14211b 0%, #39584a 50%, #14211b 100%);
                 <a href="#" style="
                       font-weight: bold;
                       text-decoration: underline;
+                      color: #9599B2;
                     ">Terms and Conditions</a>
                 or contact us via our support channels.
               </p>
