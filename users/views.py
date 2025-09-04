@@ -1691,7 +1691,7 @@ class DeletePartnerAPIView(APIView):
 
     def delete(self, request, user_id):
         try:
-            user = Users.objects.get(id=user_id, is_partner=True)
+            user = Users.objects.get(id=user_id, user_type="partner")            
             user.delete()  # 👈 HARD DELETE
             return Response(
                 {"message": "Partner deleted successfully"},
