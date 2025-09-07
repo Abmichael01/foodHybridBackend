@@ -162,7 +162,7 @@ WSGI_APPLICATION = 'foodhybrid.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql.psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'foodhybrid_db',
         'USER': 'admin',
         'PASSWORD': 'Foodhybrid@admin',
