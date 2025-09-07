@@ -19,8 +19,13 @@ schema_view = get_schema_view(
    permission_classes=(permissions.AllowAny,),  # public access
 )
 
+
+def home(request):
+    return HttpResponse("Welcome to FoodHybrid API. Visit /swagger for docs.")
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls), 
+    path('', home),
     
     # API routes
     path('api/users/', include('users.urls')),
