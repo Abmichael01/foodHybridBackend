@@ -167,7 +167,7 @@ DATABASES = {
         'USER': 'admin',
         'PASSWORD': 'Foodhybrid@admin',
         'HOST': 'localhost',
-        'PORT' ''
+        'PORT': ''
     }
 }
 
