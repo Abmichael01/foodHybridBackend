@@ -136,18 +136,18 @@ WSGI_APPLICATION = 'foodhybrid.wsgi.application'
 #         'HOST': os.getenv('PGHOST'),
 #         'PORT': os.getenv('PGPORT'),
 #     }
-# }
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL is not set in environment variables!")
+# # }
+# DATABASE_URL = os.getenv('DATABASE_URL')
+# if not DATABASE_URL:
+#     raise Exception("DATABASE_URL is not set in environment variables!")
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=DATABASE_URL,
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
 # DATABASES = {
 #     # 'default': {
 #     #     'ENGINE': 'django.db.backends.sqlite3',
@@ -160,6 +160,16 @@ DATABASES = {
 #     )
 # }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql.psycopg2',
+        'NAME': 'foodhybrid_db',
+        'USER': 'admin',
+        'PASSWORD': 'Foodhybrid@admin',
+        'HOST': 'localhost',
+        'PORT' ''
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
