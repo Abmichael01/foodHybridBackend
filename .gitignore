@@ -5,3 +5,4 @@ Untitled-1.md
 .wallet/migrations
 generate_fernet_key.py
 foodhybrid1
+.env
