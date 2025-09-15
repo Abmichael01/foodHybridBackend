@@ -27,12 +27,12 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vo0srq^w78m93a+=1cwf_h0q5(p+tjzmb9+zj6rw_miz)wjm0q'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-vo0srq^w78m93a+=1cwf_h0q5(p+tjzmb9+zj6rw_miz)wjm0q')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ["51.20.178.230","backend.foodhybrid.com", "localhost", "food-hybrid-backend.vercel.app", "vercel.app" ".vercel.app"]
+ALLOWED_HOSTS = ["51.20.178.230", "91.134.166.19", "backend.foodhybrid.com", "localhost", "food-hybrid-backend.vercel.app", "vercel.app", ".vercel.app"]
 
 AUTH_USER_MODEL = 'users.Users'  # Replace 'yourapp' with your actual app name
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Use SMTP for production
@@ -160,15 +160,16 @@ WSGI_APPLICATION = 'foodhybrid.wsgi.application'
 #     )
 # }
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL is not set in environment variables!")
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'foodhybrid_db',
-        'USER': 'admin',
-        'PASSWORD': 'Foodhybrid@admin',
-        'HOST': 'localhost',
-        'PORT': ''
-    }
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=False
+    )
 }
 
 # Password validation
@@ -254,7 +255,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
 }
 
-SWAGGER_SETTING = {
+SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS":{
         "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     }
