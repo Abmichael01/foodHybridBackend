@@ -264,7 +264,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'tafiki.com'   # Here I am using gmail smtp server 
 EMAIL_PORT = 465       # gmail smtp server port
 EMAIL_HOST_USER = 'info@tafiki.com'  # Use your email account
-EMAIL_HOST_PASSWORD = 'OmoladTrue' # 'Omolade94' gmail use app password
+EMAIL_HOST_PASSWORD = 'Omolade94@' # 'Omolade94' gmail use app password
 DEFAULT_FROM_EMAIL = 'Foodhybrid <no-reply@yourdomain.com>'
 
 EMAIL_USE_SSL = True     # for SSL communication use EMAIL_USE_SSL
