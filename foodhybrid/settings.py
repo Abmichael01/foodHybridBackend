@@ -29,8 +29,8 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-vo0srq^w78m93a+=1cwf_h0q5(p+tjzmb9+zj6rw_miz)wjm0q'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY True don'tnrunhrun with debug turned on in production!
+DEBUG = False
 
 ALLOWED_HOSTS = ["51.20.178.230","backend.foodhybrid.com", "localhost", "food-hybrid-backend.vercel.app", "vercel.app" ".vercel.app"]
 
@@ -265,7 +265,7 @@ EMAIL_HOST = 'tafiki.com'   # Here I am using gmail smtp server
 EMAIL_PORT = 465       # gmail smtp server port
 EMAIL_HOST_USER = 'info@tafiki.com'  # Use your email account
 EMAIL_HOST_PASSWORD = 'Omolade94@' # 'Omolade94' gmail use app password
-DEFAULT_FROM_EMAIL = 'Foodhybrid <no-reply@yourdomain.com>'
+DEFAULT_FROM_EMAIL = 'Foodhybrid <no-reply@foodhybrid.com>'
 
 EMAIL_USE_SSL = True     # for SSL communication use EMAIL_USE_SSL
 
