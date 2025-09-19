@@ -52,7 +52,7 @@ def send_email(user, type, subject, extra_context=None):
     email = EmailMultiAlternatives(
         subject=subject_map.get(type, subject),
         body=html_message,
-        from_email = settings.DEFAULT_FROM_EMAIL,
+        from_email = f"Food Hybrid <{settings.DEFAULT_FROM_EMAIL}>",
         to=[user.email],
     )
     email.content_subtype = "html"
@@ -78,7 +78,7 @@ def send_fh_email(user, subject, message, code=None, action_url=None, action_tex
     email = EmailMultiAlternatives(
         subject=subject,
         body=message,  # fallback text version
-        from_email=settings.DEFAULT_FROM_EMAIL,
+        from_email=f"Food Hybrid <{settings.DEFAULT_FROM_EMAIL}>",
         to=[user.email]
     )
     email.attach_alternative(html_content, "text/html")
