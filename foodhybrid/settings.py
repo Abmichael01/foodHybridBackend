@@ -272,7 +272,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-
 # STRIPE_API_KEY = os.getenv("STRIPE_API_KEY") # sk_live_... or sk_test_...
 # STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 # STRIPE_CONNECT_APP_FEE_BPS = 250 # 2.5% platform fee example
