@@ -82,7 +82,11 @@ def send_fh_email(user, subject, message, code=None, action_url=None, action_tex
         to=[user.email]
     )
     email.attach_alternative(html_content, "text/html")
-    email.send()
+    try:
+        email.send(fail_silently=True)
+    except Exception as e:
+        import logging
+        logging.error(f"Email sending failed: {e}")
 
 # def send_account_created_email(user, subject, message, code=None, action_url=None, action_text=None):
 #     html_content = render_to_string('base_template.html', {

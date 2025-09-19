@@ -8,4 +8,8 @@ def send_order_confirmation_email(user, order):
         'order': order,
         'items': order.items.all()
     })
-    send_mail(subject, '', None, [user.email], html_message=message)
+    try:
+        send_mail(subject, '', None, [user.email], html_message=message, fail_silently=True)
+    except Exception as e:
+        import logging
+        logging.error(f"Order confirmation email sending failed: {e}")

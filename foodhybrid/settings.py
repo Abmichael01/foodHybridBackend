@@ -260,13 +260,14 @@ SWAGGER_SETTINGS = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'tafiki.com'   # Here I am using gmail smtp server 
-EMAIL_PORT = 465       # gmail smtp server port
+EMAIL_HOST = 'mail.tafiki.com'   # Correct SMTP server format
+EMAIL_PORT = 587       # Standard port for TLS
 EMAIL_HOST_USER = 'info@tafiki.com'  # Use your email account
 EMAIL_HOST_PASSWORD = 'Omolade94@' # 'Omolade94' gmail use app password
 DEFAULT_FROM_EMAIL = 'info@tafiki.com'
 
-EMAIL_USE_SSL = True     # for SSL communication use EMAIL_USE_SSL
+EMAIL_USE_TLS = True     # Use TLS instead of SSL for port 587
+EMAIL_USE_SSL = False    # Disable SSL when using TLS
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
